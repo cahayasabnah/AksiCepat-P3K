@@ -15,7 +15,9 @@ import {
   Activity,
   Edit,
   ArrowLeft,
-  Trash2
+  Trash2,
+  Check,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User } from '../types';
@@ -138,7 +140,8 @@ export default function BloodBank({ user }: { user: User }) {
           quantity: qty,
           hospital: facilityOrderModal.facility,
           timestamp: new Date().toISOString(),
-          status: 'Berhasil Dipesan'
+          status: 'BERHASIL DIPESAN',
+          userEmail: user.email
         });
       }
     });
@@ -186,6 +189,25 @@ export default function BloodBank({ user }: { user: User }) {
     const updated = orders.filter(o => o.id !== orderId);
     setOrders(updated);
     localStorage.setItem('aksi_cepat_blood_orders', JSON.stringify(updated));
+  };
+
+  const handleDeleteRequest = (reqId: string) => {
+    const updated = requests.filter(r => r.id !== reqId);
+    setRequests(updated);
+    localStorage.setItem('aksi_cepat_blood_requests', JSON.stringify(updated));
+  };
+
+  const handleDonate = (reqId: string) => {
+    const updated = requests.map(r => {
+      if (r.id === reqId) {
+        if (r.bagsCollected < r.bagsNeeded) {
+          return { ...r, bagsCollected: r.bagsCollected + 1 };
+        }
+      }
+      return r;
+    });
+    setRequests(updated);
+    localStorage.setItem('aksi_cepat_blood_requests', JSON.stringify(updated));
   };
 
   const openEditOrder = (order: any) => {
@@ -389,30 +411,34 @@ export default function BloodBank({ user }: { user: User }) {
     });
   });
 
-  const [requests, setRequests] = useState<BloodRequest[]>([
-    {
-      id: 'req1',
-      patientName: 'Bp. Ahmad Subagjo',
-      bloodType: 'AB+',
-      hospital: 'RS Cipto Mangunkusumo',
-      contact: '0812-xxxx-xxxx',
-      bagsNeeded: 5,
-      bagsCollected: 2,
-      message: 'Butuh segera untuk operasi jantung besok pagi. Mohon bantuannya.',
-      timestamp: '2 jam lalu'
-    },
-    {
-      id: 'req2',
-      patientName: 'Ibu Siti Fatimah',
-      bloodType: 'O-',
-      hospital: 'RS Medika Utama',
-      contact: '0878-xxxx-xxxx',
-      bagsNeeded: 3,
-      bagsCollected: 0,
-      message: 'Darah golongan O negatif sangat terbatas di bank darah RS. Emergency!',
-      timestamp: '5 jam lalu'
-    }
-  ]);
+  const [requests, setRequests] = useState<BloodRequest[]>(() => {
+    const saved = localStorage.getItem('aksi_cepat_blood_requests');
+    if (saved) return JSON.parse(saved);
+    return [
+      {
+        id: 'req1',
+        patientName: 'Bp. Ahmad Subagjo',
+        bloodType: 'AB+',
+        hospital: 'RS Cipto Mangunkusumo',
+        contact: '0812-xxxx-xxxx',
+        bagsNeeded: 5,
+        bagsCollected: 2,
+        message: 'Butuh segera untuk operasi jantung besok pagi. Mohon bantuannya.',
+        timestamp: '2 jam lalu'
+      },
+      {
+        id: 'req2',
+        patientName: 'Ibu Siti Fatimah',
+        bloodType: 'O-',
+        hospital: 'RS Medika Utama',
+        contact: '0878-xxxx-xxxx',
+        bagsNeeded: 3,
+        bagsCollected: 0,
+        message: 'Darah golongan O negatif sangat terbatas di bank darah RS. Emergency!',
+        timestamp: '5 jam lalu'
+      }
+    ];
+  });
 
   const bloodTypes = ['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-'];
 
@@ -437,7 +463,12 @@ export default function BloodBank({ user }: { user: User }) {
     );
   });
 
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = (orders || []).filter(order => {
+    // Regular users can only see their own orders
+    if (user.role !== 'ADMIN' && order.userEmail !== user.email) {
+      return false;
+    }
+
     const search = (searchTerm || '').toLowerCase();
     const hospital = (order.hospital || '').toLowerCase();
     const bloodType = (order.bloodType || '').toLowerCase();
@@ -543,7 +574,8 @@ export default function BloodBank({ user }: { user: User }) {
         quantity: bagQuantity,
         hospital: bloodDetailModal.facilityName,
         timestamp: new Date().toISOString(),
-        status: 'Berhasil Dipesan'
+        status: 'BERHASIL DIPESAN',
+        userEmail: user.email
       };
       const updatedOrders = [newOrder, ...orders];
       setOrders(updatedOrders);
@@ -567,7 +599,9 @@ export default function BloodBank({ user }: { user: User }) {
       message: formData.get('message') as string,
       timestamp: 'Baru saja'
     };
-    setRequests([newRequest, ...requests]);
+    const updatedRes = [newRequest, ...requests];
+    setRequests(updatedRes);
+    localStorage.setItem('aksi_cepat_blood_requests', JSON.stringify(updatedRes));
     setShowRequestForm(false);
 
     // Update analytics stats
@@ -780,23 +814,82 @@ export default function BloodBank({ user }: { user: User }) {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-5 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-100 shadow-sm shadow-emerald-100/50">
-                      {order.status}
-                    </span>
-                    <button 
-                      onClick={() => openEditOrder(order)}
-                      className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-slate-100 hover:border-indigo-100 shadow-sm"
-                      title="Edit Pesanan"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteOrder(order.id)}
-                      className="p-2.5 bg-rose-50 text-rose-400 rounded-xl hover:bg-rose-100 hover:text-rose-600 transition-all border border-rose-100 shadow-sm"
-                      title="Hapus Pesanan"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {user.role === 'ADMIN' ? (
+                      <div className="flex items-center gap-2">
+                        {order.status === 'BERHASIL DIPESAN' ? (
+                          <div className="flex items-center gap-2 p-1.5 bg-slate-50 rounded-2xl border border-slate-100 shadow-inner">
+                            <button 
+                              onClick={() => {
+                                const updated = orders.map(o => 
+                                  o.id === order.id ? { ...o, status: 'SELESAI' } : o
+                                );
+                                setOrders(updated);
+                                localStorage.setItem('aksi_cepat_blood_orders', JSON.stringify(updated));
+                              }}
+                              className="px-4 py-2.5 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-sm shadow-emerald-200 flex items-center gap-2 animate-in fade-in slide-in-from-right-1"
+                            >
+                              <Check className="w-3.5 h-3.5" /> Terima
+                            </button>
+                            <button 
+                              onClick={() => {
+                                const updated = orders.map(o => 
+                                  o.id === order.id ? { ...o, status: 'DITOLAK' } : o
+                                );
+                                setOrders(updated);
+                                localStorage.setItem('aksi_cepat_blood_orders', JSON.stringify(updated));
+                              }}
+                              className="px-4 py-2.5 bg-rose-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-600 transition-all shadow-sm shadow-rose-200 flex items-center gap-2 animate-in fade-in slide-in-from-right-2"
+                            >
+                              <X className="w-3.5 h-3.5" /> Tolak
+                            </button>
+                          </div>
+                        ) : (
+                          <span className={cn(
+                            "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border shadow-sm",
+                            order.status === 'SELESAI' && "bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-100/50",
+                            order.status === 'DITOLAK' && "bg-rose-50 text-rose-600 border-rose-100 shadow-rose-100/50",
+                            "bg-indigo-50 text-indigo-600 border-indigo-100 shadow-indigo-100/50"
+                          )}>
+                            {order.status}
+                          </span>
+                        )}
+                        <button 
+                          onClick={() => handleDeleteOrder(order.id)}
+                          className="p-3 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all border border-slate-200 shadow-sm active:scale-95"
+                          title="Hapus Pesanan"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border shadow-sm",
+                          order.status === 'BERHASIL DIPESAN' && "bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-100/50",
+                          order.status === 'SELESAI' && "bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-100/50",
+                          order.status === 'DITOLAK' && "bg-rose-50 text-rose-600 border-rose-100 shadow-rose-100/50",
+                          "bg-indigo-50 text-indigo-600 border-indigo-100 shadow-indigo-100/50"
+                        )}>
+                          {order.status}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => openEditOrder(order)}
+                            className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-all border border-slate-100 hover:border-indigo-100 shadow-sm active:scale-90"
+                            title="Edit Pesanan"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteOrder(order.id)}
+                            className="p-2.5 bg-rose-50 text-rose-400 rounded-xl hover:bg-rose-100 hover:text-rose-600 transition-all border border-rose-100 shadow-sm active:scale-90"
+                            title="Hapus Pesanan"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -857,7 +950,13 @@ export default function BloodBank({ user }: { user: User }) {
                               </div>
                            </div>
                            <div className="hidden sm:block">
-                              <span className="px-3 py-1 bg-rose-100 text-rose-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-rose-200">Urgent</span>
+                              {req.bagsCollected === req.bagsNeeded ? (
+                                 <span className="px-3 py-1 bg-emerald-100 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-emerald-200 flex items-center gap-1 animate-pulse">
+                                    <Check className="w-3 h-3" /> Terpenuhi
+                                 </span>
+                              ) : (
+                                 <span className="px-3 py-1 bg-rose-100 text-rose-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-rose-200">Urgent</span>
+                              )}
                            </div>
                         </div>
 
@@ -875,19 +974,37 @@ export default function BloodBank({ user }: { user: User }) {
                               </div>
                               <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                                  <div 
-                                   className="h-full bg-rose-600 transition-all duration-1000"
+                                   className={`h-full transition-all duration-1000 ${req.bagsCollected === req.bagsNeeded ? 'bg-emerald-500' : 'bg-rose-600'}`}
                                    style={{ width: `${(req.bagsCollected / req.bagsNeeded) * 100}%` }}
                                  ></div>
                               </div>
                            </div>
 
                            <div className="flex items-center gap-3">
-                              <button className="flex-1 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
-                                 <Send className="w-3.5 h-3.5" /> Saya Bisa Donor
-                              </button>
-                              <a href={`tel:${req.contact}`} className="w-14 h-14 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl flex items-center justify-center hover:bg-rose-100 transition-colors shrink-0">
+                              {req.bagsCollected === req.bagsNeeded ? (
+                                 <div className="flex-1 py-4 bg-emerald-50 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-emerald-200 shadow-sm">
+                                    <Check className="w-3.5 h-3.5" /> Goal Terpenuhi
+                                 </div>
+                              ) : (
+                                 <button 
+                                   onClick={() => handleDonate(req.id)}
+                                   className="flex-1 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                                 >
+                                    <Send className="w-3.5 h-3.5" /> Saya Bisa Donor
+                                 </button>
+                              )}
+                              <a href={`tel:${req.contact}`} className="w-14 h-14 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl flex items-center justify-center hover:bg-rose-100 transition-colors shrink-0 active:scale-90 shadow-sm">
                                  <Phone className="w-5 h-5" />
                               </a>
+                              {user.role === 'ADMIN' && (
+                                <button 
+                                  onClick={() => handleDeleteRequest(req.id)}
+                                  className="w-14 h-14 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center hover:bg-rose-50 hover:text-rose-600 transition-all border border-slate-200 hover:border-rose-200 active:scale-90 shadow-sm"
+                                  title="Hapus Pengumuman"
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              )}
                            </div>
                         </div>
                      </div>

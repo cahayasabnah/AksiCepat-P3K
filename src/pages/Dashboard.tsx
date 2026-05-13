@@ -12,7 +12,8 @@ import {
   ArrowRight,
   TrendingUp,
   AlertTriangle,
-  Hospital
+  Hospital,
+  Trash2
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { User, Metric } from '../types';
@@ -28,7 +29,10 @@ export default function Dashboard({ user }: DashboardProps) {
   const [showUserList, setShowUserList] = useState(false);
   const [showSearchHistory, setShowSearchHistory] = useState(false);
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
   const [searchHistory, setSearchHistory] = useState<{ id: string; query: string; time: string; status: string }[]>([]);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     // Load metrics for admin
@@ -40,7 +44,7 @@ export default function Dashboard({ user }: DashboardProps) {
     const mockHistory = [
       { id: '1', query: 'Ambulans Gawat Darurat', time: 'Baru saja', status: 'DITEMUKAN' },
       { id: '2', query: 'IGD RS Fatmawati', time: '5 menit lalu', status: 'DITEMUKAN' },
-      { id: '3', query: 'Stok Darah AB+', time: '12 menit lalu', status: 'DIPROSES' },
+      { id: '3', query: 'Stok Darah AB+', time: '12 menit lalu', status: 'SELESAI' },
       { id: '4', query: 'Puskesmas Terdekat', time: '30 menit lalu', status: 'DITEMUKAN' },
       { id: '5', query: 'Bantuan Tabung Oksigen', time: '1 jam lalu', status: 'KOSONG' },
     ];
@@ -55,11 +59,38 @@ export default function Dashboard({ user }: DashboardProps) {
 
     const currentTotal = parseInt(totalS || mockHistory.length.toString());
 
+    const uniqueNamesCount = new Set(loadedUsers.map((u: User) => u.name.toLowerCase().trim())).size;
+
     setMetrics({
       totalSeaches: currentTotal,
-      activeUsers: loadedUsers.length
+      activeUsers: uniqueNamesCount
     });
   }, []);
+
+  const confirmDeleteUser = () => {
+    if (!userToDelete) return;
+
+    const updated = allUsers.filter(u => u.id !== userToDelete);
+    setAllUsers(updated);
+    localStorage.setItem('aksi_cepat_all_users', JSON.stringify(updated));
+    
+    const uniqueCount = new Set(updated.map((u: User) => u.name.toLowerCase().trim())).size;
+    
+    setMetrics(prev => ({
+      ...prev,
+      activeUsers: uniqueCount
+    }));
+    setUserToDelete(null);
+  };
+
+  const handleDeleteUser = (userId: string) => {
+    if (userId === user.id) {
+      setDeleteError("Anda tidak bisa menghapus akun Anda sendiri.");
+      setTimeout(() => setDeleteError(null), 3000);
+      return;
+    }
+    setUserToDelete(userId);
+  };
 
   const handleStatClick = (type: 'SEARCH' | 'USER') => {
     if (type === 'SEARCH') {
@@ -93,6 +124,70 @@ export default function Dashboard({ user }: DashboardProps) {
   if (user.role === 'ADMIN') {
     return (
       <div className="space-y-12">
+        {userToDelete && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div 
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               onClick={() => setUserToDelete(null)}
+               className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            />
+            <motion.div 
+               initial={{ scale: 0.9, opacity: 0, y: 20 }}
+               animate={{ scale: 1, opacity: 1, y: 0 }}
+               className="bg-white rounded-[40px] shadow-2xl p-8 max-w-lg w-full z-10 border border-slate-100 relative"
+            >
+               <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center">
+                     <AlertTriangle className="w-7 h-7" />
+                  </div>
+                  <div>
+                     <h3 className="text-xl font-black text-slate-900 tracking-tight leading-none uppercase italic">Konfirmasi Hapus</h3>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Tindakan ini tidak dapat dibatalkan</p>
+                  </div>
+               </div>
+
+               <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 mb-8">
+                  <table className="w-full text-left">
+                     <tbody>
+                        <tr>
+                           <td className="py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama User</td>
+                           <td className="py-2 text-sm font-black text-slate-900">: {allUsers.find(u => u.id === userToDelete)?.name}</td>
+                        </tr>
+                        <tr>
+                           <td className="py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Alamat Email</td>
+                           <td className="py-2 text-sm font-black text-slate-900">: {allUsers.find(u => u.id === userToDelete)?.email}</td>
+                        </tr>
+                        <tr>
+                           <td className="py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status Role</td>
+                           <td className="py-2 flex items-center gap-2">
+                              : <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-black uppercase tracking-widest rounded-full">
+                                 {allUsers.find(u => u.id === userToDelete)?.role}
+                              </span>
+                           </td>
+                        </tr>
+                     </tbody>
+                  </table>
+               </div>
+
+               <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => setUserToDelete(null)}
+                    className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
+                  >
+                     Batal
+                  </button>
+                  <button 
+                    onClick={confirmDeleteUser}
+                    className="flex-1 py-4 bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-200 flex items-center justify-center gap-2"
+                  >
+                     Iya, Hapus Akun
+                  </button>
+               </div>
+            </motion.div>
+          </div>
+        )}
+
         <header>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Akses Kontrol</p>
           <h1 className="text-[40px] font-black text-slate-900 tracking-tighter leading-none italic">ADMIN <span className="text-red-600">UNIT.</span></h1>
@@ -177,7 +272,7 @@ export default function Dashboard({ user }: DashboardProps) {
                       <td className="py-4">
                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${
                           s.status === 'DITEMUKAN' ? 'bg-emerald-50 text-emerald-600' : 
-                          s.status === 'DIPROSES' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'
+                          s.status === 'SELESAI' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
                         }`}>
                           {s.status}
                         </span>
@@ -196,17 +291,34 @@ export default function Dashboard({ user }: DashboardProps) {
             animate={{ opacity: 1, y: 0 }}
             className="bg-white border border-slate-200 rounded-[40px] p-10 shadow-xl overflow-hidden"
           >
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
               <div>
                 <h3 className="text-2xl font-black text-slate-900 italic tracking-tighter leading-none">DATABASE PENGGUNA</h3>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Daftar Akun yang Terdaftar di Sistem</p>
+                {deleteError && (
+                  <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mt-2 animate-pulse">{deleteError}</p>
+                )}
               </div>
-              <button 
-                onClick={() => setShowUserList(false)}
-                className="px-6 py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl text-xs font-black uppercase tracking-widest transition-colors"
-              >
-                Tutup Database
-              </button>
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="relative group w-full sm:w-64">
+                   <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                      <Search className="w-3.5 h-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                   </div>
+                   <input 
+                      type="text"
+                      placeholder="Cari Nama atau Email..."
+                      value={userSearchQuery}
+                      onChange={(e) => setUserSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 focus:bg-white transition-all placeholder:text-slate-300"
+                   />
+                </div>
+                <button 
+                  onClick={() => setShowUserList(false)}
+                  className="px-6 py-3 bg-slate-100 hover:bg-slate-200 rounded-2xl text-xs font-black uppercase tracking-widest transition-colors"
+                >
+                  Tutup Database
+                </button>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -217,10 +329,19 @@ export default function Dashboard({ user }: DashboardProps) {
                     <th className="pb-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama Lengkap</th>
                     <th className="pb-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</th>
                     <th className="pb-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Role</th>
+                    <th className="pb-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right px-4">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {allUsers.map((u) => (
+                  {allUsers
+                    .filter((u, index, self) => 
+                      index === self.findIndex((t) => t.name.toLowerCase().trim() === u.name.toLowerCase().trim())
+                    )
+                    .filter(u => 
+                      u.name.toLowerCase().includes(userSearchQuery.toLowerCase()) || 
+                      u.email.toLowerCase().includes(userSearchQuery.toLowerCase())
+                    )
+                    .map((u) => (
                     <tr key={u.id} className="group hover:bg-slate-50 transition-colors">
                       <td className="py-4 text-[10px] font-mono text-slate-400 uppercase tracking-tighter">#{u.id.slice(0, 4)}</td>
                       <td className="py-4">
@@ -233,6 +354,15 @@ export default function Dashboard({ user }: DashboardProps) {
                         }`}>
                           {u.role}
                         </span>
+                      </td>
+                      <td className="py-4 text-right px-4">
+                        <button 
+                          onClick={() => handleDeleteUser(u.id)}
+                          className="p-2 bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all border border-slate-100 hover:border-rose-100 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed group/del"
+                          disabled={u.id === user.id}
+                        >
+                          <Trash2 className="w-3.5 h-3.5 group-hover/del:scale-110 transition-transform" />
+                        </button>
                       </td>
                     </tr>
                   ))}

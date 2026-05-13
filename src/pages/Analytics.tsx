@@ -143,10 +143,48 @@ export default function Analytics({ user }: { user?: User }) {
     return type.includes(search) || (search.length > 0 && search.includes(type)) || facility.includes(search) || status.includes(search);
   });
 
-  const bloodStockData = filteredStats.map((item: any) => ({
-    ...item,
-    color: item.status === 'Aman' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'
-  }));
+  const bloodStockData = filteredStats.map((item: any) => {
+    let requestCount = item.request;
+    let lastFacility = item.lastFacility;
+    let displayStatus = item.status;
+    let statusColor = item.status === 'Aman' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100';
+    
+    if (user?.role !== 'ADMIN') {
+      const ordersJson = localStorage.getItem('aksi_cepat_blood_orders') || '[]';
+      const allOrders = JSON.parse(ordersJson);
+      const userOrders = allOrders.filter((o: any) => o.userEmail === user?.email);
+      
+      const relevantOrders = userOrders.filter((o: any) => o.bloodType.replace(/[+-]/g, '') === item.type);
+      requestCount = relevantOrders.reduce((sum: number, o: any) => sum + o.quantity, 0);
+      lastFacility = relevantOrders.length > 0 ? relevantOrders[relevantOrders.length - 1].hospital : '-';
+      
+      const hasPending = relevantOrders.some((o: any) => o.status === 'BERHASIL DIPESAN');
+      const hasCompleted = relevantOrders.some((o: any) => o.status === 'SELESAI');
+      const hasRejected = relevantOrders.some((o: any) => o.status === 'DITOLAK');
+      
+      if (hasPending) {
+        displayStatus = 'Diproses';
+        statusColor = 'bg-amber-50 text-amber-600 border-amber-100';
+      } else if (hasCompleted) {
+        displayStatus = 'Selesai';
+        statusColor = 'bg-emerald-50 text-emerald-600 border-emerald-100';
+      } else if (hasRejected) {
+        displayStatus = 'Ditolak';
+        statusColor = 'bg-rose-50 text-rose-600 border-rose-100';
+      } else {
+        displayStatus = 'Tidak Ada';
+        statusColor = 'bg-slate-50 text-slate-400 border-slate-100';
+      }
+    }
+
+    return {
+      ...item,
+      request: requestCount,
+      lastFacility: lastFacility,
+      status: displayStatus,
+      color: statusColor
+    };
+  });
 
   const handleExport = () => {
     const doc = new jsPDF();
