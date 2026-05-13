@@ -22,19 +22,16 @@ const DefaultIcon = L.icon({
 const UserIcon = L.divIcon({
   html: `
     <div class="relative flex items-center justify-center">
-      <div class="absolute w-12 h-12 bg-blue-500/30 rounded-full animate-[ping_2.5s_infinite]"></div>
-      <div class="absolute w-8 h-8 bg-blue-500/40 rounded-full animate-[pulse_1.5s_infinite]"></div>
-      <div class="w-6 h-6 bg-blue-600 rounded-full border-4 border-white shadow-[0_0_20px_rgba(37,99,235,0.8)] z-10 relative flex items-center justify-center">
-        <div class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-      </div>
-      <div class="absolute -bottom-6 bg-white/90 backdrop-blur px-2 py-0.5 rounded-full border border-blue-100 shadow-sm whitespace-nowrap">
-        <span class="text-[8px] font-black text-blue-600 uppercase tracking-tighter">Lokasi Anda</span>
+      <div class="absolute w-12 h-12 bg-blue-500/20 rounded-full animate-[ping_3s_infinite]"></div>
+      <div class="absolute w-8 h-8 bg-blue-500/30 rounded-full animate-[pulse_2s_infinite]"></div>
+      <div class="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-[0_0_15px_rgba(37,99,235,0.6)] z-10 relative flex items-center justify-center">
+        <div class="w-1 h-1 bg-white rounded-full"></div>
       </div>
     </div>
   `,
   className: '',
-  iconSize: [48, 64],
-  iconAnchor: [24, 32]
+  iconSize: [48, 48],
+  iconAnchor: [24, 24]
 });
 
 const IncidentIcon = L.divIcon({
@@ -404,11 +401,9 @@ export default function Facilities({ user }: FacilitiesProps) {
             <LocateControl setUserLocation={setUserLocation} setIncidentLocation={updateIncidentLocation} />
             <MapEvents onMapClick={(lat, lng) => updateIncidentLocation([lat, lng])} />
             
-            {/* User GPS Marker (Gojek Style) */}
+            {/* User GPS Marker (Passive) */}
             {userLocation && (
-              <Marker position={userLocation} icon={UserIcon}>
-                <Popup>Posisi GPS Anda (Mengikuti Bergerak)</Popup>
-              </Marker>
+              <Marker position={userLocation} icon={UserIcon} zIndexOffset={-500} />
             )}
 
             {/* Auto-detected Incident / Crash Marker */}
