@@ -254,12 +254,30 @@ export const INITIAL_FACILITIES: Facility[] = [
     lng: 106.7722
   },
   {
-    id: '12',
-    name: 'RS Pelni Jakarta',
-    address: 'Jl. Aipda KS Tubun No. 92, Slipi',
-    phone: '021-555-0010',
+    id: '13',
+    name: 'RS Omni Pulomas',
+    address: 'Jl. Pulo Mas Bar. VI No.20, Jakarta Timur',
+    phone: '021-2977-9999',
     type: 'RS',
-    lat: -6.1952,
-    lng: 106.8022
+    lat: -6.1772,
+    lng: 106.8842
+  },
+  {
+    id: '14',
+    name: 'RS Columbia Asia Pulomas',
+    address: 'Jl. Kayu Putih Raya No.1, Jakarta Timur',
+    phone: '021-2927-4500',
+    type: 'RS',
+    lat: -6.1842,
+    lng: 106.8822
+  },
+  {
+    id: '15',
+    name: 'RS Mediros',
+    address: 'Jl. Perintis Kemerdekaan No.149, Jakarta Timur',
+    phone: '021-489-2108',
+    type: 'RS',
+    lat: -6.1812,
+    lng: 106.8992
   }
 ];

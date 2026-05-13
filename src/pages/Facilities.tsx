@@ -54,20 +54,21 @@ const IncidentIcon = L.divIcon({
 const RecommendationIcon = (type: string) => L.divIcon({
   html: `
     <div class="relative flex flex-col items-center">
-      <div class="absolute -inset-2 bg-red-600/20 rounded-full animate-ping"></div>
-      <div class="absolute -top-7 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-md shadow-xl uppercase italic whitespace-nowrap z-50">
-        ${type === 'RS' ? 'RUMAH SAKIT' : 'KLINIK'}
-        <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-red-600 rotate-45"></div>
+      <div class="absolute -inset-4 bg-red-600/20 rounded-full animate-ping"></div>
+      <div class="absolute -top-10 bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-xl shadow-2xl uppercase italic whitespace-nowrap z-[2000] border-2 border-white">
+        ${type === 'RS' ? 'REKOMENDASI: RS' : 'REKOMENDASI: KLINIK'}
+        <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-red-600 rotate-45 border-b-2 border-r-2 border-white"></div>
       </div>
-      <div class="w-8 h-8 bg-black rounded-full border-2 border-white shadow-lg flex items-center justify-center scale-110">
-         <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+      <div class="w-10 h-10 bg-white rounded-full border-4 border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)] flex items-center justify-center scale-110 z-[1100]">
+         <div class="w-2.5 h-2.5 bg-red-600 rounded-full animate-pulse"></div>
+         <div class="absolute inset-0 border-2 border-red-200 rounded-full animate-[ping_3s_infinite]"></div>
       </div>
-      <div class="w-1.5 h-3 bg-black/60 rounded-full mt-0.5"></div>
+      <div class="w-2 h-4 bg-red-600/40 rounded-full mt-1 blur-[1px]"></div>
     </div>
   `,
   className: '',
-  iconSize: [36, 50],
-  iconAnchor: [18, 50]
+  iconSize: [40, 60],
+  iconAnchor: [20, 60]
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
@@ -169,9 +170,10 @@ export default function Facilities({ user }: FacilitiesProps) {
 
   const [isFetchingNearby, setIsFetchingNearby] = useState(false);
 
-  const fetchNearbyFromOSM = async (lat: number, lng: number, radius = 30000) => {
-    setIsFetchingNearby(radius <= 30000); // Only show overlay for first fetch
+  const fetchNearbyFromOSM = async (lat: number, lng: number, radius = 15000) => {
+    setIsFetchingNearby(radius <= 15000); // Only show overlay for first fetch
     try {
+      console.log(`Fetching OSM nearby (radius: ${radius}m) for:`, lat, lng);
       // Overpass API Query for hospitals and clinics
       const query = `
         [out:json][timeout:25];
@@ -204,16 +206,19 @@ export default function Facilities({ user }: FacilitiesProps) {
         } as Facility;
       }).filter((f: Facility) => f.lat && f.lng);
  
-      if (osmFacilities.length === 0 && radius < 60000) {
+      console.log(`Found ${osmFacilities.length} OSM results.`);
+
+      if (osmFacilities.length === 0 && radius < 45000) {
         // Retry with larger radius if nothing found
-        console.log("No results, retrying with 60km...");
-        fetchNearbyFromOSM(lat, lng, 60000);
+        console.log("No results, retrying with 45km...");
+        fetchNearbyFromOSM(lat, lng, 45000);
         return;
       }
  
       setFacilities(prev => {
         const nonOSM = prev.filter(f => !f.id.startsWith('osm-'));
         const filteredOSM = osmFacilities.filter(of => !nonOSM.some(pf => pf.name.toLowerCase() === of.name.toLowerCase()));
+        console.log(`Merging ${filteredOSM.length} new OSM facilities.`);
         return [...nonOSM, ...filteredOSM];
       });
     } catch (error) {
@@ -235,8 +240,8 @@ export default function Facilities({ user }: FacilitiesProps) {
     const saved = localStorage.getItem('aksi_cepat_facilities');
     if (saved) {
       const parsed: Facility[] = JSON.parse(saved);
-      // If we have fewer than 5 facilities, reset to include the new ones I just added
-      const needsUpdate = parsed.length < 5 || parsed.some(f => !f.lat || !f.lng);
+      // If we have fewer than 15 facilities, reset to include the new ones
+      const needsUpdate = parsed.length < 15 || parsed.some(f => !f.lat || !f.lng);
       if (needsUpdate) {
         setFacilities(INITIAL_FACILITIES);
         localStorage.setItem('aksi_cepat_facilities', JSON.stringify(INITIAL_FACILITIES));
@@ -280,9 +285,9 @@ export default function Facilities({ user }: FacilitiesProps) {
         ...f,
         distance: f.lat && f.lng ? calculateDistance(baseLoc[0], baseLoc[1], f.lat, f.lng) : Infinity
       }))
-      .filter(f => f.distance !== Infinity)
+      .filter(f => f.distance !== Infinity && f.distance < 50) // Within 50km
       .sort((a, b) => a.distance - b.distance)
-      .slice(0, 30); // Increased to show many more options as requested
+      .slice(0, 15); // Show top 15 recommendations on map
   }, [userLocation, incidentLocation, facilities]);
 
   const filteredFacilities = facilities.filter(f => 
@@ -431,6 +436,7 @@ export default function Facilities({ user }: FacilitiesProps) {
                   key={f.id} 
                   position={[f.lat, f.lng]} 
                   icon={isRecommended ? RecommendationIcon(f.type) : DefaultIcon}
+                  zIndexOffset={isRecommended ? 2000 : 0}
                 >
                   <Tooltip 
                     permanent={isRecommended}
