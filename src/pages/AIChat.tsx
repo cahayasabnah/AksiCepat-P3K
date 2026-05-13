@@ -49,13 +49,26 @@ export default function AIChat() {
         }),
       });
 
+      const contentType = response.headers.get("content-type");
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Terjadi kesalahan pada server AI');
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Terjadi kesalahan pada server AI');
+        } else {
+          const textError = await response.text();
+          console.error("Non-JSON Error Response:", textError);
+          throw new Error(`Server Error (${response.status}): Endpoint API tidak ditemukan atau server bermasalah.`);
+        }
       }
 
-      const data = await response.json();
-      return data.text || "Maaf, saya tidak bisa memproses permintaan Anda saat ini.";
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        return data.text || "Maaf, saya tidak bisa memproses permintaan Anda saat ini.";
+      } else {
+        const textResponse = await response.text();
+        console.error("Expected JSON but got:", textResponse);
+        throw new Error("Respon server tidak valid (bukan JSON).");
+      }
     } catch (error: any) {
       console.error("AI API Error:", error);
       throw error;
