@@ -279,5 +279,32 @@ export const INITIAL_FACILITIES: Facility[] = [
     type: 'RS',
     lat: -6.1812,
     lng: 106.8992
+  },
+  {
+    id: '16',
+    name: 'RS Yadika Pondok Bambu',
+    address: 'Jl. Pahlawan Revolusi No.47, Jakarta Timur',
+    phone: '021-861-5750',
+    type: 'RS',
+    lat: -6.2305,
+    lng: 106.9054
+  },
+  {
+    id: '17',
+    name: 'RSIA Bunda Aliyah',
+    address: 'Jl. Pahlawan Revolusi No.100, Pondok Bambu',
+    phone: '021-8660-2525',
+    type: 'RS',
+    lat: -6.2355,
+    lng: 106.9062
+  },
+  {
+    id: '18',
+    name: 'RS Islam Jakarta Pondok Kopi',
+    address: 'Jl. Raya Pd. Kopi No.1, Jakarta Timur',
+    phone: '021-863-0654',
+    type: 'RS',
+    lat: -6.2232,
+    lng: 106.9452
   }
 ];

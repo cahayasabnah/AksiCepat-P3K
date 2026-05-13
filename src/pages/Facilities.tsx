@@ -50,20 +50,20 @@ const IncidentIcon = L.divIcon({
 
 const RecommendationIcon = (type: string) => L.divIcon({
   html: `
-    <div class="relative flex flex-col items-center">
-      <div class="absolute -inset-4 bg-red-600/20 rounded-full animate-ping"></div>
-      <div class="absolute -top-10 bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded-xl shadow-2xl uppercase italic whitespace-nowrap z-[2000] border-2 border-white">
-        ${type === 'RS' ? 'REKOMENDASI: RS' : 'REKOMENDASI: KLINIK'}
-        <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-red-600 rotate-45 border-b-2 border-r-2 border-white"></div>
+    <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+      <div style="position: absolute; inset: -16px; background: rgba(220, 38, 38, 0.2); border-radius: 9999px;" class="animate-ping"></div>
+      <div style="position: absolute; top: -40px; background: #dc2626; color: #ffffff; font-size: 10px; font-weight: 900; padding: 4px 12px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); text-transform: uppercase; font-style: italic; white-space: nowrap; z-index: 2000; border: 2px solid white;">
+        ${type === 'RS' ? 'REKOMENDASI RS' : 'REKOMENDASI KLINIK'}
+        <div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 10px; height: 10px; background: #dc2626; border-bottom: 2px solid white; border-right: 2px solid white;"></div>
       </div>
-      <div class="w-10 h-10 bg-white rounded-full border-4 border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)] flex items-center justify-center scale-110 z-[1100]">
-         <div class="w-2.5 h-2.5 bg-red-600 rounded-full animate-pulse"></div>
-         <div class="absolute inset-0 border-2 border-red-200 rounded-full animate-[ping_3s_infinite]"></div>
+      <div style="width: 40px; height: 40px; background: #ffffff; border-radius: 9999px; border: 4px solid #dc2626; box-shadow: 0 0 20px rgba(220, 38, 38, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1100;">
+         <div style="width: 10px; height: 10px; background: #dc2626; border-radius: 9999px;" class="animate-pulse"></div>
+         <div style="position: absolute; inset: 0; border: 2px solid #fecaca; border-radius: 9999px;" class="animate-[ping_3s_infinite]"></div>
       </div>
-      <div class="w-2 h-4 bg-red-600/40 rounded-full mt-1 blur-[1px]"></div>
+      <div style="width: 8px; height: 16px; background: rgba(220, 38, 38, 0.4); border-radius: 9999px; margin-top: 4px; filter: blur(1px);"></div>
     </div>
   `,
-  className: '',
+  className: 'recommendation-marker',
   iconSize: [40, 60],
   iconAnchor: [20, 60]
 });
@@ -237,8 +237,8 @@ export default function Facilities({ user }: FacilitiesProps) {
     const saved = localStorage.getItem('aksi_cepat_facilities');
     if (saved) {
       const parsed: Facility[] = JSON.parse(saved);
-      // If we have fewer than 15 facilities, reset to include the new ones
-      const needsUpdate = parsed.length < 15 || parsed.some(f => !f.lat || !f.lng);
+      // If we have fewer than 18 facilities, reset to include the new ones
+      const needsUpdate = parsed.length < 18 || parsed.some(f => !f.lat || !f.lng);
       if (needsUpdate) {
         setFacilities(INITIAL_FACILITIES);
         localStorage.setItem('aksi_cepat_facilities', JSON.stringify(INITIAL_FACILITIES));
@@ -426,12 +426,21 @@ export default function Facilities({ user }: FacilitiesProps) {
             {/* Facility Markers */}
             {facilities.map((f) => {
               const isRecommended = recommendedFacilities.some(rf => rf.id === f.id);
+              const isClosest = recommendedFacilities.length > 0 && recommendedFacilities[0].id === f.id;
+              
               return f.lat && f.lng && (
                 <Marker 
-                  key={f.id} 
+                  key={`${f.id}-${isRecommended ? 'rec' : 'std'}`} 
                   position={[f.lat, f.lng]} 
                   icon={isRecommended ? RecommendationIcon(f.type) : DefaultIcon}
                   zIndexOffset={isRecommended ? 2000 : 0}
+                  eventHandlers={{
+                    add: (e) => {
+                      if (isClosest) {
+                         setTimeout(() => e.target.openPopup(), 1000);
+                      }
+                    }
+                  }}
                 >
                   <Tooltip 
                     permanent={isRecommended}
