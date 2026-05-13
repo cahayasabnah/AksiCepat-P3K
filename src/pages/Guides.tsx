@@ -143,10 +143,22 @@ export default function Guides({ user }: GuidesProps) {
   const removeSymptom = (idx: number) => setFormData(prev => ({ ...prev, symptoms: (prev.symptoms || []).filter((_, i) => i !== idx) }));
 
   const handleGuideClick = (guideTitle: string) => {
+    // Legacy aggregate clicks count (keep for backward compatibility if needed, but we'll prefer logs)
     const clicksJson = localStorage.getItem('aksi_cepat_guide_clicks') || '{}';
     const clicks = JSON.parse(clicksJson);
     clicks[guideTitle] = (clicks[guideTitle] || 0) + 1;
     localStorage.setItem('aksi_cepat_guide_clicks', JSON.stringify(clicks));
+
+    // Detailed logs for personalized analytics
+    const logsJson = localStorage.getItem('aksi_cepat_guide_logs') || '[]';
+    const logs = JSON.parse(logsJson);
+    logs.push({
+      guideTitle,
+      userEmail: user.email,
+      userName: user.name,
+      timestamp: new Date().toISOString()
+    });
+    localStorage.setItem('aksi_cepat_guide_logs', JSON.stringify(logs));
     
     // Also enter focus mode locally
     setSearchTerm(guideTitle);
@@ -439,18 +451,13 @@ export default function Guides({ user }: GuidesProps) {
         )}
       </AnimatePresence>
 
-            <div className={cn(
-              "p-8 bg-red-600 rounded-[32px] text-white flex flex-col md:flex-row items-center gap-8 justify-between mt-8",
-              isFocused && "hidden"
-            )}>
-         <div className="space-y-2">
-            <h3 className="text-2xl font-bold">Butuh Bantuan Langsung?</h3>
-            <p className="text-red-100 max-w-md">Asisten AI kami dapat menjawab pertanyaan darurat Anda secara spesifik dalam hitungan detik.</p>
-         </div>
-         <button onClick={() => navigate('/app/ai-chat')} className="px-8 py-4 bg-white text-red-600 rounded-2xl font-bold shadow-xl shadow-red-700/20 hover:scale-105 transition-transform whitespace-nowrap">
-            Buka Chat Asisten AI
-         </button>
-      </div>
+          <div className="bg-slate-900 rounded-[32px] p-10 text-white shadow-2xl shadow-slate-200 relative overflow-hidden group">
+            <div className="relative z-10">
+              <h3 className="text-3xl font-black italic tracking-tighter leading-none mb-4 uppercase">Butuh Bantuan Medis?</h3>
+              <p className="text-slate-400 max-w-md">Gunakan fitur Beranda Darurat untuk panduan langkah-demi-langkah atau cari faskes terdekat segera.</p>
+            </div>
+            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-slate-800 rounded-full blur-3xl opacity-50"></div>
+          </div>
     </div>
   );
 }

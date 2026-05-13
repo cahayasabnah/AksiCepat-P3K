@@ -3,7 +3,6 @@ import {
   Activity, 
   Clock, 
   Hospital, 
-  Bot, 
   Book, 
   Droplets, 
   FileDown, 
@@ -13,8 +12,7 @@ import {
   Search,
   LayoutDashboard,
   X,
-  User as UserIcon,
-  MapPin
+  User as UserIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import jsPDF from 'jspdf';
@@ -26,12 +24,44 @@ import { User } from '../types';
 
 export default function Analytics({ user }: { user?: User }) {
   const [period, setPeriod] = useState('Bulan Ini');
-  const [selectedQueryDetail, setSelectedQueryDetail] = useState<{ query: string, count: number } | null>(null);
   const navigate = useNavigate();
 
-  // Load dynamic metrics from localStorage
+  const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
+
+  // Get registered users
+  const registeredUsers = JSON.parse(localStorage.getItem('aksi_cepat_all_users') || '[]');
+  
+  // Get users from guide logs
+  const guideLogs = JSON.parse(localStorage.getItem('aksi_cepat_guide_logs') || '[]');
+  const guideUserEmails = new Set(guideLogs.map((l: any) => l.userEmail));
+  
+  // Get users from blood orders
+  const bloodOrders = JSON.parse(localStorage.getItem('aksi_cepat_blood_orders') || '[]');
+  const bloodUserEmails = new Set(bloodOrders.map((o: any) => o.userEmail));
+
+  // Filter unique registered users with normalization
+  const allUserEmails = new Set([
+    ...registeredUsers.map((u: any) => u.email?.toLowerCase().trim())
+  ].filter(Boolean));
+
+  // Build full user list with details based strictly on registered users
+  const finalUsers = Array.from(allUserEmails).map(email => {
+    const regUser = registeredUsers.find((u: any) => u.email?.toLowerCase().trim() === email);
+    const guideLog = guideLogs.find((l: any) => l.userEmail?.toLowerCase().trim() === email);
+    const orderLog = bloodOrders.find((o: any) => o.userEmail?.toLowerCase().trim() === email);
+    
+    return {
+      email,
+      name: regUser?.name || guideLog?.userName || orderLog?.userName || email?.split('@')[0] || 'Anonymous',
+      role: regUser?.role || (email === 'admin@gmail.com' ? 'ADMIN' : 'USER'),
+      lastActivity: [guideLog?.timestamp, orderLog?.timestamp].filter(Boolean).sort().reverse()[0] || 'Baru Saja'
+    };
+  });
+
   const totalSearches = parseInt(localStorage.getItem('aksi_cepat_searches') || '0');
-  const usersCount = JSON.parse(localStorage.getItem('aksi_cepat_all_users') || '[]').length;
+  
+  // Use registered users count for accuracy
+  const usersCount = finalUsers.length;
   
   // Simulated success rate based on searches
   const tertangani = totalSearches > 0 ? Math.floor((totalSearches / (totalSearches + 2)) * 100) : 0;
@@ -59,37 +89,47 @@ export default function Analytics({ user }: { user?: User }) {
       title: 'Aktivitas Pengguna (Terdaftar)',
       value: usersCount.toLocaleString(),
       subValue: 'Akun Aktif',
-      icon: Hospital,
+      icon: UserIcon,
       color: 'text-emerald-600',
       bg: 'bg-emerald-50',
       trend: 'Database Sinkron'
     }
   ];
 
-  // Load real logs
-  const logsJson = localStorage.getItem('aksi_cepat_search_logs') || '[]';
-  const searchLogs = JSON.parse(logsJson);
+  // Load real guide logs for personalized analytics
+  const guideLogsJson = localStorage.getItem('aksi_cepat_guide_logs') || '[]';
+  const allGuideLogs = JSON.parse(guideLogsJson);
+  
+  // Also keep backward compatibility with old aggregate clicks for now
+  const legacyClicksJson = localStorage.getItem('aksi_cepat_guide_clicks') || '{}';
+  const legacyClicks = JSON.parse(legacyClicksJson);
 
-  // Calculate top queries from real logs
-  const queryCounts: { [key: string]: number } = {};
-  searchLogs.forEach((log: any) => {
-    queryCounts[log.query] = (queryCounts[log.query] || 0) + 1;
+  // Filter logs based on role
+  let relevantLogs = allGuideLogs;
+  if (user?.role !== 'ADMIN') {
+    relevantLogs = allGuideLogs.filter((log: any) => log.userEmail === user?.email);
+  }
+
+  // Aggregate logs into counts
+  const aggregatedClicks: { [key: string]: number } = {};
+  
+  // Process detailed logs
+  relevantLogs.forEach((log: any) => {
+    aggregatedClicks[log.guideTitle] = (aggregatedClicks[log.guideTitle] || 0) + 1;
   });
 
-  const aiQueries = Object.entries(queryCounts)
-    .map(([query, count]) => ({ query, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
+  // If we are admin and detailed logs are sparse, merge with legacy data for completeness
+  if (user?.role === 'ADMIN' && allGuideLogs.length === 0) {
+    Object.entries(legacyClicks).forEach(([title, count]) => {
+      aggregatedClicks[title] = (aggregatedClicks[title] || 0) + (count as number);
+    });
+  }
 
-  // Load real guide clicks
-  const guideClicksJson = localStorage.getItem('aksi_cepat_guide_clicks') || '{}';
-  const guideClicks = JSON.parse(guideClicksJson);
-
-  const guideEntries = Object.entries(guideClicks)
+  const guideEntries = Object.entries(aggregatedClicks)
     .map(([label, count]) => ({ 
       originalLabel: label,
       label: label.toUpperCase(), 
-      count: count as number,
+      count: user?.role === 'ADMIN' ? (count as number) : 1,
       color: 'bg-indigo-500'
     }))
     .sort((a, b) => b.count - a.count)
@@ -144,23 +184,30 @@ export default function Analytics({ user }: { user?: User }) {
   });
 
   const bloodStockData = filteredStats.map((item: any) => {
+    const ordersJson = localStorage.getItem('aksi_cepat_blood_orders') || '[]';
+    const allOrders = JSON.parse(ordersJson);
+    
+    // Find orders for this specific blood type
+    // Note: in orders, bloodType is "A+", "A-", etc. in bloodStats it's "A", "B", etc.
+    const relevantOrders = allOrders.filter((o: any) => o.bloodType.replace(/[+-]/g, '') === item.type);
+    
     let requestCount = item.request;
     let lastFacility = item.lastFacility;
     let displayStatus = item.status;
     let statusColor = item.status === 'Aman' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100';
     
+    // Collect unique names of requesters
+    const requesters = Array.from(new Set(relevantOrders.map((o: any) => o.userName || o.userEmail || 'Anonim')));
+
     if (user?.role !== 'ADMIN') {
-      const ordersJson = localStorage.getItem('aksi_cepat_blood_orders') || '[]';
-      const allOrders = JSON.parse(ordersJson);
-      const userOrders = allOrders.filter((o: any) => o.userEmail === user?.email);
+      const userOrders = relevantOrders.filter((o: any) => o.userEmail === user?.email);
       
-      const relevantOrders = userOrders.filter((o: any) => o.bloodType.replace(/[+-]/g, '') === item.type);
-      requestCount = relevantOrders.reduce((sum: number, o: any) => sum + o.quantity, 0);
-      lastFacility = relevantOrders.length > 0 ? relevantOrders[relevantOrders.length - 1].hospital : '-';
+      requestCount = userOrders.reduce((sum: number, o: any) => sum + o.quantity, 0);
+      lastFacility = userOrders.length > 0 ? userOrders[userOrders.length - 1].hospital : '-';
       
-      const hasPending = relevantOrders.some((o: any) => o.status === 'BERHASIL DIPESAN');
-      const hasCompleted = relevantOrders.some((o: any) => o.status === 'SELESAI');
-      const hasRejected = relevantOrders.some((o: any) => o.status === 'DITOLAK');
+      const hasPending = userOrders.some((o: any) => o.status === 'BERHASIL DIPESAN');
+      const hasCompleted = userOrders.some((o: any) => o.status === 'SELESAI');
+      const hasRejected = userOrders.some((o: any) => o.status === 'DITOLAK');
       
       if (hasPending) {
         displayStatus = 'Diproses';
@@ -175,6 +222,11 @@ export default function Analytics({ user }: { user?: User }) {
         displayStatus = 'Tidak Ada';
         statusColor = 'bg-slate-50 text-slate-400 border-slate-100';
       }
+    } else {
+      // For Admin, ensure requestCount accurately reflects total orders if bloodStats was stale
+      const totalTypeRequest = relevantOrders.reduce((sum: number, o: any) => sum + o.quantity, 0);
+      if (totalTypeRequest > requestCount) requestCount = totalTypeRequest;
+      if (relevantOrders.length > 0) lastFacility = relevantOrders[0].hospital;
     }
 
     return {
@@ -182,7 +234,8 @@ export default function Analytics({ user }: { user?: User }) {
       request: requestCount,
       lastFacility: lastFacility,
       status: displayStatus,
-      color: statusColor
+      color: statusColor,
+      requesters: requesters
     };
   });
 
@@ -219,21 +272,8 @@ export default function Analytics({ user }: { user?: User }) {
       headStyles: { fillColor: [15, 23, 42] },
     });
 
-    // Top AI Queries
-    let finalY = (doc as any).lastAutoTable.finalY + 15;
-    doc.setFontSize(14);
-    doc.text('Top Kueri Asisten AI', 14, finalY);
-
-    autoTable(doc, {
-      startY: finalY + 5,
-      head: [['No', 'Kueri Pencarian', 'Jumlah Akses']],
-      body: aiQueries.map((q, i) => [i + 1, q.query, q.count]),
-      theme: 'grid',
-      headStyles: { fillColor: [79, 70, 229] }, // indigo-600
-    });
-
     // Medical Guides
-    finalY = (doc as any).lastAutoTable.finalY + 15;
+    let finalY = (doc as any).lastAutoTable.finalY + 15;
     if (finalY > 250) { doc.addPage(); finalY = 20; }
     doc.setFontSize(14);
     doc.text('Analitik Panduan Medis', 14, finalY);
@@ -254,8 +294,8 @@ export default function Analytics({ user }: { user?: User }) {
 
     autoTable(doc, {
       startY: finalY + 5,
-      head: [['Tipe', 'Permintaan', 'Fasilitas Terakhir', 'Status']],
-      body: bloodStockData.map(b => [b.type, b.request, b.lastFacility || '-', b.status]),
+      head: [['Tipe', 'Pemesan', 'Permintaan', 'Fasilitas Terakhir', 'Status']],
+      body: bloodStockData.map(b => [b.type, b.requesters.join(', ') || '-', b.request, b.lastFacility || '-', b.status]),
       theme: 'grid',
       headStyles: { fillColor: [225, 29, 72] }, // rose-600
     });
@@ -332,7 +372,8 @@ export default function Analytics({ user }: { user?: User }) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm flex items-center justify-between group hover:border-slate-300 transition-all"
+                onClick={() => card.title.includes('Aktivitas') && setIsUsersModalOpen(true)}
+                className={`bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm flex items-center justify-between group hover:border-slate-300 transition-all ${card.title.includes('Aktivitas') ? 'cursor-pointer hover:bg-slate-50/50' : ''}`}
               >
                 <div className="space-y-4">
                   <div className="space-y-1">
@@ -353,68 +394,7 @@ export default function Analytics({ user }: { user?: User }) {
         )}
 
         {/* User Analytics Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* AI Analytics */}
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden"
-          >
-            <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-black text-slate-900 italic tracking-tighter leading-none uppercase">Top Kueri Asisten AI</h3>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">Tren Pencarian Keluhan Medis</p>
-              </div>
-              <div className="p-3 bg-indigo-50 rounded-2xl text-indigo-600">
-                <Bot className="w-6 h-6" />
-              </div>
-            </div>
-            <div className="p-4">
-              {aiQueries.length > 0 ? (
-                <table className="w-full text-left">
-                  <tbody className="divide-y divide-slate-50">
-                    {aiQueries.map((item, idx) => (
-                      <tr 
-                        key={idx} 
-                        onClick={() => navigate('/app/chat', { state: { query: item.query } })}
-                        className="group hover:bg-slate-50 transition-colors cursor-pointer"
-                      >
-                        <td className="px-6 py-5">
-                          <div className="flex items-center gap-4">
-                            <span className="text-xs font-black text-slate-300">0{idx + 1}</span>
-                            <p className="text-sm font-bold text-slate-800 tracking-tight">{item.query}</p>
-                          </div>
-                        </td>
-                        <td className="px-6 py-5 text-right">
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedQueryDetail(item);
-                            }}
-                            className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors cursor-pointer"
-                          >
-                            <Search className="w-3 h-3 text-slate-400" />
-                            <span className="text-[11px] font-black text-slate-900 tracking-tighter">{item.count}</span>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="flex flex-col items-center justify-center p-20 text-center space-y-4">
-                  <div className="w-20 h-20 bg-slate-50 rounded-[32px] flex items-center justify-center text-slate-200">
-                    <Search className="w-10 h-10" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest tracking-tighter">BELUM ADA DATA</p>
-                    <p className="text-[10px] font-bold text-slate-300 uppercase mt-1">LAKUKAN PENCARIAN DI ASISTEN AI</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
-
+        <div className="grid grid-cols-1 gap-8">
           {/* Medical Guides Analytics */}
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
@@ -423,8 +403,12 @@ export default function Analytics({ user }: { user?: User }) {
           >
             <div className="p-8 border-b border-slate-50 flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-black text-slate-900 italic tracking-tighter leading-none uppercase">Artikel Panduan Terpopuler</h3>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">Data Akses Materi Penyelamatan</p>
+                <h3 className="text-xl font-black text-slate-900 italic tracking-tighter leading-none uppercase">
+                  {user?.role === 'ADMIN' ? 'Artikel Panduan Terpopuler' : 'Riwayat Baca Panduan'}
+                </h3>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">
+                  {user?.role === 'ADMIN' ? 'Data Akses Materi Penyelamatan' : 'Materi yang telah Anda pelajari'}
+                </p>
               </div>
               <div className="p-3 bg-emerald-50 rounded-2xl text-emerald-600">
                 <Book className="w-6 h-6" />
@@ -459,8 +443,12 @@ export default function Analytics({ user }: { user?: User }) {
                     <Book className="w-8 h-8" />
                   </div>
                   <div>
-                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest tracking-tighter">BELUM ADA RIWAYAT BACA</p>
-                    <p className="text-[10px] font-bold text-slate-300 uppercase mt-1">PENGGUNA BELUM MEMBUKA PANDUAN</p>
+                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest tracking-tighter">
+                      {user?.role === 'ADMIN' ? 'BELUM ADA DATA' : 'BELUM ADA RIWAYAT BACA'}
+                    </p>
+                    <p className="text-[10px] font-bold text-slate-300 uppercase mt-1">
+                      {user?.role === 'ADMIN' ? 'PENGGUNA BELUM MEMBUKA PANDUAN' : 'Selesaikan panduan untuk melihat progres Anda'}
+                    </p>
                   </div>
                 </div>
               )}
@@ -501,6 +489,7 @@ export default function Analytics({ user }: { user?: User }) {
               <thead>
                 <tr className="bg-slate-50/50">
                   <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Golongan Darah</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Pemesan</th>
                   <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Permintaan Masuk</th>
                   <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">Lokasi / Alamat RS</th>
                   <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Status Kritis</th>
@@ -514,6 +503,19 @@ export default function Analytics({ user }: { user?: User }) {
                          <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-black text-sm">{blood.type}</div>
                          <p className="text-sm font-black text-slate-900 tracking-tighter uppercase italic">Tipe {blood.type}</p>
                       </div>
+                    </td>
+                    <td className="px-10 py-8">
+                      {blood.requesters.length > 0 ? (
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                          {blood.requesters.map((name: string, i: number) => (
+                            <span key={i} className="px-2 py-0.5 bg-slate-100 text-[10px] font-bold text-slate-600 rounded-md whitespace-nowrap">
+                              {name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-slate-300 italic">-</span>
+                      )}
                     </td>
                     <td className="px-10 py-8">
                       <div className="flex items-center gap-2">
@@ -567,14 +569,15 @@ export default function Analytics({ user }: { user?: User }) {
         </motion.div>
       </div>
 
+      {/* Users List Modal */}
       <AnimatePresence>
-        {selectedQueryDetail && (
+        {isUsersModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-10 no-print">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setSelectedQueryDetail(null)}
+              onClick={() => setIsUsersModalOpen(false)}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div 
@@ -585,16 +588,16 @@ export default function Analytics({ user }: { user?: User }) {
             >
               <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-indigo-100 rounded-2xl text-indigo-600">
-                    <Search className="w-6 h-6" />
+                  <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
+                    <UserIcon className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 italic tracking-tighter leading-none uppercase">Detail Pencarian</h3>
-                    <p className="text-sm font-bold text-indigo-600 mt-1">{selectedQueryDetail.query}</p>
+                    <h3 className="text-xl font-black text-slate-900 italic tracking-tighter leading-none uppercase">Daftar Pengguna</h3>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Status Aktivitas Akun Terdaftar</p>
                   </div>
                 </div>
                 <button 
-                  onClick={() => setSelectedQueryDetail(null)}
+                  onClick={() => setIsUsersModalOpen(false)}
                   className="p-2 hover:bg-slate-200 rounded-full transition-colors"
                 >
                   <X className="w-6 h-6 text-slate-400" />
@@ -603,44 +606,36 @@ export default function Analytics({ user }: { user?: User }) {
 
               <div className="flex-1 overflow-y-auto p-4 sm:p-8">
                 <div className="space-y-4">
-                  {searchLogs
-                    .filter((log: any) => log.query === selectedQueryDetail.query)
-                    .map((log: any, i: number) => (
-                      <div key={log.id || i} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between group hover:border-indigo-200 transition-all">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 border border-slate-100 shadow-sm transition-transform group-hover:scale-110">
-                            <UserIcon className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <p className="text-xs font-black text-slate-900 uppercase tracking-widest">{log.userName}</p>
-                          </div>
+                  {finalUsers.length > 0 ? finalUsers.map((u: any, i: number) => (
+                    <div key={i} className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between group hover:border-emerald-200 transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 border border-slate-100 shadow-sm transition-transform group-hover:scale-110">
+                          <UserIcon className="w-6 h-6" />
                         </div>
-                        <div className="text-right">
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Waktu</p>
-                          <p className="text-[11px] font-black text-slate-900 italic tracking-tighter">
-                            {(() => {
-                              const diff = Math.floor((new Date().getTime() - new Date(log.timestamp).getTime()) / 60000);
-                              if (diff < 1) return 'Baru Saja';
-                              if (diff < 60) return `${diff} Menit Lalu`;
-                              return `${Math.floor(diff / 60)} Jam Lalu`;
-                            })()}
-                          </p>
+                        <div>
+                          <p className="text-sm font-black text-slate-900 uppercase tracking-widest">{u.name || 'Anonymous'}</p>
+                          <p className="text-[10px] font-bold text-slate-400">{u.email}</p>
+                          <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em] mt-1">Aktivitas: {u.lastActivity === 'Baru Saja' ? 'Aktif' : (new Date(u.lastActivity).toLocaleDateString())}</p>
                         </div>
                       </div>
-                    ))}
+                      <div className="flex items-center gap-3">
+                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${u.role === 'ADMIN' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-slate-200 text-slate-600'}`}>
+                          {u.role || 'USER'}
+                        </span>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="text-center py-20 text-slate-300 italic">Belum ada akun terdaftar</div>
+                  )}
                 </div>
               </div>
 
               <div className="p-8 bg-slate-50 border-t border-slate-100">
                 <button 
-                  onClick={() => {
-                    navigate('/app/chat', { state: { query: selectedQueryDetail.query } });
-                    setSelectedQueryDetail(null);
-                  }}
-                  className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
+                  onClick={() => setIsUsersModalOpen(false)}
+                  className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all"
                 >
-                  <Bot className="w-4 h-4" />
-                  Lihat Rekomendasi AI untuk Kasus Ini
+                  Tutup Panel
                 </button>
               </div>
             </motion.div>

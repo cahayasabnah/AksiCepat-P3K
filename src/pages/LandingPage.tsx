@@ -29,13 +29,13 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
           >
             <span className="px-4 py-1.5 bg-red-50 text-red-600 rounded-full text-sm font-bold tracking-wide uppercase">
-              P3K Pintar Berbasis AI
+              Panduan P3K Pintar
             </span>
             <h1 className="text-6xl md:text-8xl font-black text-slate-900 mt-6 leading-[0.9] tracking-tighter italic">
               THE GOLDEN <br/> <span className="text-red-600">HOUR.</span>
             </h1>
             <p className="text-lg text-slate-500 mt-8 max-w-lg leading-relaxed font-medium italic">
-              Kuasai detik-detik krusial. Selamatkan nyawa dengan panduan P3K cerdas dan asisten AI real-time.
+              Kuasai detik-detik krusial. Selamatkan nyawa dengan panduan P3K cerdas dan informasi fasilitas kesehatan darurat.
             </p>
           </motion.div>
 
@@ -79,8 +79,8 @@ export default function LandingPage() {
                    <p className="text-xs text-red-600 mt-1">Dinginkan dengan air mengalir 20 menit...</p>
                 </div>
                 <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                   <p className="text-sm font-bold text-blue-700">Asisten AI Aktif</p>
-                   <p className="text-xs text-blue-600 mt-1">"Cara menangani tersedak pada bayi?"</p>
+                   <p className="text-sm font-bold text-blue-700">Database Panduan Valid</p>
+                   <p className="text-xs text-blue-600 mt-1">Langkah-langkah medis dari sumber terpercaya.</p>
                 </div>
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                    <p className="text-sm font-bold text-slate-700">Faskes Terdekat</p>

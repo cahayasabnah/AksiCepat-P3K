@@ -348,13 +348,15 @@ export default function Facilities({ user }: FacilitiesProps) {
               <MapIcon className="w-4 h-4" /> Peta
             </button>
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="px-6 py-3 bg-red-600 text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-red-700 transition-all shadow-lg shadow-red-100 shrink-0"
-          >
-            <Plus className="w-5 h-5" />
-            Tambah Faskes
-          </button>
+          {user.role === 'ADMIN' && (
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="px-6 py-3 bg-red-600 text-white rounded-2xl font-bold flex items-center gap-2 hover:bg-red-700 transition-all shadow-lg shadow-red-100 shrink-0"
+            >
+              <Plus className="w-5 h-5" />
+              Tambah Faskes
+            </button>
+          )}
         </div>
       </header>
 

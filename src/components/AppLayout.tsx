@@ -29,7 +29,6 @@ export default function AppLayout({ children, user, onLogout }: AppLayoutProps) 
 
   const navItems = [
     { name: 'Beranda Darurat', path: '/app', icon: LayoutDashboard },
-    { name: 'Tanya Asisten AI', path: '/app/ai-chat', icon: MessageSquare },
     { name: 'Panduan Medis', path: '/app/guides', icon: BookOpen },
     { name: 'Fasilitas Kesehatan', path: '/app/facilities', icon: Hospital },
     { name: 'Stok Darah (PMI)', path: '/app/blood-bank', icon: Droplets },

@@ -141,7 +141,8 @@ export default function BloodBank({ user }: { user: User }) {
           hospital: facilityOrderModal.facility,
           timestamp: new Date().toISOString(),
           status: 'BERHASIL DIPESAN',
-          userEmail: user.email
+          userEmail: user.email,
+          userName: user.name
         });
       }
     });
@@ -575,7 +576,8 @@ export default function BloodBank({ user }: { user: User }) {
         hospital: bloodDetailModal.facilityName,
         timestamp: new Date().toISOString(),
         status: 'BERHASIL DIPESAN',
-        userEmail: user.email
+        userEmail: user.email,
+        userName: user.name
       };
       const updatedOrders = [newOrder, ...orders];
       setOrders(updatedOrders);

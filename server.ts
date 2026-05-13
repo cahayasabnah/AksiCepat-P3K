@@ -13,62 +13,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', environment: process.env.NODE_ENV });
 });
 
-// 2. Gemini AI Assistant (Direct HTTP Implementation)
-app.post('/api/chat', async (req, res) => {
-  const { query, systemPrompt } = req.body;
-  const apiKey = process.env.GEMINI_API_KEY;
-
-  if (!apiKey) {
-    return res.status(500).json({ error: 'GEMINI_API_KEY tidak ditemukan di environment server.' });
-  }
-
-  try {
-    const URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-    const response = await fetch(URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: query }]
-          }
-        ],
-        systemInstruction: {
-          parts: [{ text: systemPrompt }]
-        },
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2048,
-        }
-      })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Gemini API Error Response:', errorData);
-      throw new Error(errorData.error?.message || `Gemini API Error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!aiText) {
-      throw new Error('Asisten AI tidak memberikan jawaban yang valid.');
-    }
-
-    res.json({ text: aiText });
-  } catch (error: any) {
-    console.error('AI Processing Error:', error);
-    res.status(500).json({ error: error.message || 'Terjadi kesalahan sistem saat memproses permintaan AI.' });
-  }
-});
-
 async function start() {
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

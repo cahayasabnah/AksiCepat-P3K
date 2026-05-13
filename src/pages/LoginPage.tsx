@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Activity, Mail, Lock, User as UserIcon, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Activity, Mail, Lock, User as UserIcon, ArrowRight, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
 import { User, Role } from '../types';
 
@@ -59,6 +59,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           name: name || (email === 'admin@gmail.com' ? 'Administrator' : 'Pengguna Baru'),
           role: email === 'admin@gmail.com' ? 'ADMIN' : 'USER'
         };
+        // Save this new user to the list
+        allUsers.push(currentUser);
+        localStorage.setItem('aksi_cepat_all_users', JSON.stringify(allUsers));
       }
     }
 
@@ -70,15 +73,27 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
       {/* Left Side: Illustration & Branding */}
       <div className="flex-1 bg-red-600 p-12 text-white flex flex-col justify-between relative overflow-hidden">
+        <div className="flex items-center justify-between z-20">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="bg-white p-2 rounded-xl shadow-lg shadow-red-900/10">
+              <Activity className="text-red-600 w-6 h-6" />
+            </div>
+            <span className="text-2xl font-bold tracking-tight">AksiCepat</span>
+          </Link>
+
+          <Link 
+            to="/" 
+            className="flex items-center gap-2 text-red-100 hover:text-white transition-colors group"
+          >
+            <div className="w-8 h-8 rounded-full border border-red-500 bg-red-700/50 flex items-center justify-center group-hover:border-white group-hover:bg-red-500 transition-all shadow-lg shadow-red-900/20">
+              <ArrowLeft className="w-4 h-4" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Kembali</span>
+          </Link>
+        </div>
+
         <div className="absolute top-0 right-0 w-96 h-96 bg-red-500 rounded-full blur-3xl opacity-20 -mr-48 -mt-48"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-red-700 rounded-full blur-3xl opacity-30 -ml-40 -mb-40"></div>
-        
-        <Link to="/" className="flex items-center gap-2 z-10">
-          <div className="bg-white p-2 rounded-lg">
-            <Activity className="text-red-600 w-6 h-6" />
-          </div>
-          <span className="text-2xl font-bold tracking-tight">AksiCepat</span>
-        </Link>
 
         <div className="z-10 max-w-md space-y-6">
           <motion.h2 
@@ -89,7 +104,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             Satu Akun untuk Seluruh Kesiagaan Anda.
           </motion.h2>
           <p className="text-red-100 text-lg leading-relaxed">
-            Dapatkan panduan terstruktur, asisten AI, dan informasi faskes terdekat dalam satu genggaman.
+            Dapatkan panduan terstruktur dan informasi faskes terdekat dalam satu genggaman.
           </p>
         </div>
 
@@ -101,7 +116,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       </div>
 
       {/* Right Side: Login Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
+      <div className="flex-1 flex items-center justify-center p-8 bg-white relative">
         <motion.div 
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -110,12 +125,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-slate-900">{isRegister ? 'Buat Akun Baru' : 'Selamat Datang Kembali'}</h1>
             <p className="text-slate-500">
-              {isRegister ? 'Sudah punya akun?' : 'Belum punya akun?'} 
+              {isRegister ? 'Sudah punya akun?' : 'Belum isi akun?'} 
               <button 
                 onClick={() => setIsRegister(!isRegister)}
                 className="ml-1 text-red-600 font-bold hover:underline"
               >
-                {isRegister ? 'Masuk di sini' : 'Daftar sekarang'}
+                {isRegister ? 'Masuk di sini' : 'Isi sekarang'}
               </button>
             </p>
           </div>

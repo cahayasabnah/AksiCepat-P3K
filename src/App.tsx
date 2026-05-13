@@ -10,7 +10,6 @@ import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import Guides from './pages/Guides';
 import Facilities from './pages/Facilities';
-import AIChat from './pages/AIChat';
 import BloodBank from './pages/BloodBank';
 import Analytics from './pages/Analytics';
 import AppLayout from './components/AppLayout';
@@ -66,14 +65,6 @@ export default function App() {
           user ? (
             <AppLayout user={user} onLogout={logout}>
               <Facilities user={user} />
-            </AppLayout>
-          ) : <Navigate to="/login" />
-        } />
-
-        <Route path="/app/ai-chat" element={
-          user ? (
-            <AppLayout user={user} onLogout={logout}>
-              <AIChat />
             </AppLayout>
           ) : <Navigate to="/login" />
         } />

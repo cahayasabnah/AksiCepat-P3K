@@ -1,12 +1,11 @@
 {
   "name": "AksiCepat - P3K Pintar",
-  "description": "Aplikasi panduan pertolongan pertama cerdas dengan asisten AI dan navigasi fasilitas kesehatan darurat.",
+  "description": "Aplikasi panduan pertolongan pertama cerdas dengan navigasi fasilitas kesehatan darurat.",
   "requestFramePermissions": [
     "geolocation"
   ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API",
-    "AI Chatbot",
     "Emergency Response Guide",
     "Facility Management"
   ]

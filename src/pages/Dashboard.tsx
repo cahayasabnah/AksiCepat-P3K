@@ -422,42 +422,18 @@ export default function Dashboard({ user }: DashboardProps) {
 
   return (
     <div className="space-y-12">
-      <header className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-        <div className="lg:col-span-8 relative bg-white rounded-[40px] p-10 border border-slate-200 overflow-hidden shadow-sm group">
+      <header className="grid grid-cols-1 gap-8 items-center">
+        <div className="relative bg-white rounded-[40px] p-10 border border-slate-200 overflow-hidden shadow-sm group">
           <div className="relative z-10 space-y-4">
             <p className="text-[10px] font-black text-red-600 uppercase tracking-[0.3em] mb-2">Fundamental Response</p>
             <h1 className="text-[64px] md:text-[80px] leading-[0.85] font-black italic text-slate-900 tracking-tighter">
               THE GOLDEN <br/> <span className="text-red-600">HOUR.</span>
             </h1>
-            <p className="max-w-md text-slate-500 mt-6 text-sm leading-relaxed font-medium">
-              Setiap detik berharga. Penanganan yang tepat dalam 60 menit pertama dapat menentukan keselamatan nyawa korban. Pilih jenis kecelakaan untuk langkah instan.
+            <p className="max-w-2xl text-slate-500 mt-6 text-sm leading-relaxed font-medium">
+              Setiap detik berharga. Penanganan yang tepat dalam 60 menit pertama dapat menentukan keselamatan nyawa korban. Pilih jenis kecelakaan untuk mendapatkan panduan langkah demi langkah secara instan.
             </p>
           </div>
           <div className="absolute -right-16 -bottom-16 w-80 h-80 bg-red-50 rounded-full blur-3xl opacity-60 group-hover:bg-red-100 transition-colors duration-500"></div>
-        </div>
-
-        <div className="lg:col-span-4 bg-slate-900 rounded-[40px] p-8 text-white h-full flex flex-col justify-between shadow-xl shadow-slate-200 min-h-[300px]">
-           <button onClick={() => navigate('/app/ai-chat')} className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center animate-pulse">
-                <Zap className="w-5 h-5 fill-white" />
-              </div>
-              <div>
-                <p className="text-xs font-black uppercase tracking-widest">Asisten AI P3K</p>
-                <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest">Siaga Online 24/7</p>
-              </div>
-           </button>
-
-           <div className="space-y-4">
-              <p className="text-xs text-slate-400 font-medium italic leading-relaxed">
-                "Cara menangani luka bakar berat?" - Coba tanyakan pada asisten cerdas kami untuk instruksi instan.
-              </p>
-              <button 
-                 onClick={() => navigate('/app/ai-chat')}
-                 className="w-full py-4 bg-white text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all shadow-lg"
-              >
-                Mulai Konsultasi AI
-              </button>
-           </div>
         </div>
       </header>
 
