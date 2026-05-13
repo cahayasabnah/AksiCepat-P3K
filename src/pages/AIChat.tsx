@@ -84,8 +84,12 @@ export default function AIChat() {
     try {
       const aiResponse = await callAiApi(query);
       setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { role: 'ai', content: "Terjadi kesalahan pada sistem asisten AI. Silakan periksa koneksi Anda atau coba lagi nanti." }]);
+    } catch (error: any) {
+      const errorMessage = error.message.includes('API Key') 
+        ? "API Key Gemini belum diatur di server (Vercel). Silakan tambahkan GEMINI_API_KEY di dashboard Vercel."
+        : "Terjadi kesalahan: " + (error.message || "Asisten AI sedang sibuk.");
+      
+      setMessages(prev => [...prev, { role: 'ai', content: errorMessage }]);
     } finally {
       setIsTyping(false);
     }
@@ -125,8 +129,12 @@ export default function AIChat() {
     try {
       const aiResponse = await callAiApi(userMessage);
       setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { role: 'ai', content: "Terjadi kesalahan pada sistem asisten AI. Silakan periksa koneksi Anda atau coba lagi nanti." }]);
+    } catch (error: any) {
+      const errorMessage = error.message.includes('API Key') 
+        ? "API Key Gemini belum diatur di server (Vercel). Silakan tambahkan GEMINI_API_KEY di dashboard Vercel."
+        : "Terjadi kesalahan: " + (error.message || "Asisten AI sedang sibuk.");
+      
+      setMessages(prev => [...prev, { role: 'ai', content: errorMessage }]);
     } finally {
       setIsTyping(false);
     }

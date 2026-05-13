@@ -19,23 +19,37 @@ async function startServer() {
       
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
-        return res.status(500).json({ error: 'GEMINI_API_KEY is not set' });
+        console.error('Missing GEMINI_API_KEY environment variable');
+        return res.status(500).json({ error: 'API Key tidak ditemukan di environment server' });
       }
 
-      const client = new GoogleGenAI({ apiKey });
+      const client = new GoogleGenAI({ 
+        apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
       
       const response = await client.models.generateContent({
-        model: "gemini-1.5-flash", // Using a stable alias
+        model: "gemini-3-flash-preview",
         contents: query,
         config: {
           systemInstruction: systemPrompt,
         }
       });
 
+      if (!response.text) {
+        throw new Error('Model tidak mengembalikan teks');
+      }
+
       res.json({ text: response.text });
     } catch (error: any) {
       console.error('Gemini API Error:', error);
-      res.status(500).json({ error: error.message || 'Internal Server Error' });
+      const status = error.status || 500;
+      const message = error.message || 'Internal Server Error';
+      res.status(status).json({ error: message });
     }
   });
 
