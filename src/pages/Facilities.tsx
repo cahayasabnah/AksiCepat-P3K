@@ -54,19 +54,20 @@ const IncidentIcon = L.divIcon({
 const RecommendationIcon = (type: string) => L.divIcon({
   html: `
     <div class="relative flex flex-col items-center">
+      <div class="absolute -inset-2 bg-red-600/20 rounded-full animate-ping"></div>
       <div class="absolute -top-7 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-md shadow-xl uppercase italic whitespace-nowrap z-50">
         ${type === 'RS' ? 'RUMAH SAKIT' : 'KLINIK'}
         <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-red-600 rotate-45"></div>
       </div>
-      <div class="w-7 h-7 bg-red-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center">
-         <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
+      <div class="w-8 h-8 bg-black rounded-full border-2 border-white shadow-lg flex items-center justify-center scale-110">
+         <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
       </div>
-      <div class="w-1 h-2 bg-red-600/60 rounded-full mt-0.5"></div>
+      <div class="w-1.5 h-3 bg-black/60 rounded-full mt-0.5"></div>
     </div>
   `,
   className: '',
-  iconSize: [32, 45],
-  iconAnchor: [16, 45]
+  iconSize: [36, 50],
+  iconAnchor: [18, 50]
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
@@ -87,11 +88,12 @@ function LocateControl({ setUserLocation, setIncidentLocation }: { setUserLocati
   const map = useMap();
   
   const locate = () => {
-    map.locate().on("locationfound", function (e) {
+    map.locate({ setView: true, maxZoom: 16 }).on("locationfound", function (e) {
       const loc: [number, number] = [e.latlng.lat, e.latlng.lng];
       setUserLocation(loc);
       setIncidentLocation(loc);
-      map.flyTo(e.latlng, 15);
+      // Force a manual flyTo to be sure
+      map.flyTo(e.latlng, 16, { animate: true, duration: 1.5 });
     });
   };
 
@@ -167,16 +169,16 @@ export default function Facilities({ user }: FacilitiesProps) {
 
   const [isFetchingNearby, setIsFetchingNearby] = useState(false);
 
-  const fetchNearbyFromOSM = async (lat: number, lng: number) => {
-    setIsFetchingNearby(true);
+  const fetchNearbyFromOSM = async (lat: number, lng: number, radius = 30000) => {
+    setIsFetchingNearby(radius <= 30000); // Only show overlay for first fetch
     try {
-      // Overpass API Query for hospitals and clinics within 30km
+      // Overpass API Query for hospitals and clinics
       const query = `
         [out:json][timeout:25];
         (
-          node["amenity"~"hospital|clinic"](around:30000,${lat},${lng});
-          way["amenity"~"hospital|clinic"](around:30000,${lat},${lng});
-          relation["amenity"~"hospital|clinic"](around:30000,${lat},${lng});
+          node["amenity"~"hospital|clinic"](around:${radius},${lat},${lng});
+          way["amenity"~"hospital|clinic"](around:${radius},${lat},${lng});
+          relation["amenity"~"hospital|clinic"](around:${radius},${lat},${lng});
         );
         out center;
       `;
@@ -201,16 +203,21 @@ export default function Facilities({ user }: FacilitiesProps) {
           lng: el.lon || el.center?.lon
         } as Facility;
       }).filter((f: Facility) => f.lat && f.lng);
-
+ 
+      if (osmFacilities.length === 0 && radius < 60000) {
+        // Retry with larger radius if nothing found
+        console.log("No results, retrying with 60km...");
+        fetchNearbyFromOSM(lat, lng, 60000);
+        return;
+      }
+ 
       setFacilities(prev => {
-        // Keep non-OSM facilities (user added or initial mock)
         const nonOSM = prev.filter(f => !f.id.startsWith('osm-'));
-        // Merge with fetched ones, avoiding name duplicates
-        const filteredOSM = osmFacilities.filter(of => !nonOSM.some(pf => pf.name === of.name));
+        const filteredOSM = osmFacilities.filter(of => !nonOSM.some(pf => pf.name.toLowerCase() === of.name.toLowerCase()));
         return [...nonOSM, ...filteredOSM];
       });
     } catch (error) {
-      console.error("Error fetching from OSM:", error);
+      console.error("OSM Error:", error);
     } finally {
       setIsFetchingNearby(false);
     }
@@ -363,6 +370,22 @@ export default function Facilities({ user }: FacilitiesProps) {
       {/* Map View */}
       {viewMode === 'map' && (
         <div className="h-[600px] w-full rounded-[40px] overflow-hidden border border-slate-200 shadow-xl relative z-10 mb-8">
+          <AnimatePresence>
+            {isFetchingNearby && (
+              <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none"
+              >
+                <div className="bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700/50 backdrop-blur-xl">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+                  <span className="text-xs font-black uppercase tracking-[0.2em] italic">Mencari Faskes Terdekat...</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <MapContainer 
             center={userLocation || [-6.2088, 106.8456]} 
             zoom={13} 
@@ -387,7 +410,14 @@ export default function Facilities({ user }: FacilitiesProps) {
             {incidentLocation && (
               <Marker position={incidentLocation} icon={IncidentIcon}>
                 <Tooltip permanent direction="bottom" offset={[0, 10]} className="!bg-red-600 !border-none !text-white !font-black !px-3 !py-2 !rounded-xl !shadow-2xl !italic">
-                  LOKASI KEJADIAN TERDETEKSI
+                  <div className="flex flex-col items-center">
+                    <span>LOKASI KEJADIAN TERDETEKSI</span>
+                    {isFetchingNearby ? (
+                      <span className="text-[7px] animate-pulse mt-0.5 opacity-80 uppercase tracking-widest leading-none">Mencari RS Terdekat...</span>
+                    ) : (
+                      <span className="text-[7px] mt-0.5 opacity-80 uppercase tracking-widest leading-none">Disarankan: {recommendedFacilities.length} Faskes di Area</span>
+                    )}
+                  </div>
                 </Tooltip>
                 <Popup>Titik lokasi kecelakaan (Terbaca Otomatis)</Popup>
               </Marker>
