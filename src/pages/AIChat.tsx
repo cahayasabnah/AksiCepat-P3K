@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User as UserIcon, AlertCircle, Loader2, Sparkles, ArrowLeft } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { GoogleGenAI } from "@google/genai";
+import { Send, Bot, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 
@@ -29,23 +28,44 @@ export default function AIChat() {
   const initialProcessed = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
   useEffect(() => {
     if (location.state?.query && !initialProcessed.current) {
       initialProcessed.current = true;
       const initialQuery = location.state.query;
-      // Trigger send automatically
       processInitialQuery(initialQuery);
     }
   }, [location]);
 
+  const callAiApi = async (query: string) => {
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query,
+          systemPrompt: SYSTEM_PROMPT
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Terjadi kesalahan pada server AI');
+      }
+
+      const data = await response.json();
+      return data.text || "Maaf, saya tidak bisa memproses permintaan Anda saat ini.";
+    } catch (error: any) {
+      console.error("AI API Error:", error);
+      throw error;
+    }
+  };
+
   const processInitialQuery = async (query: string) => {
-    // Increment search count for analytics
     const currentSearches = parseInt(localStorage.getItem('aksi_cepat_searches') || '0');
     localStorage.setItem('aksi_cepat_searches', (currentSearches + 1).toString());
 
-    // Store log for analytics
     const userJson = localStorage.getItem('aksi_cepat_current_user');
     const currentUser = userJson ? JSON.parse(userJson) : null;
     const logsJson = localStorage.getItem('aksi_cepat_search_logs') || '[]';
@@ -56,24 +76,15 @@ export default function AIChat() {
       userName: currentUser?.name || 'Anonim',
       timestamp: new Date().toISOString()
     });
-    localStorage.setItem('aksi_cepat_search_logs', JSON.stringify(logs.slice(0, 100))); // Keep last 100
+    localStorage.setItem('aksi_cepat_search_logs', JSON.stringify(logs.slice(0, 100)));
 
     setMessages(prev => [...prev, { role: 'user', content: query }]);
     setIsTyping(true);
 
     try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: query,
-        config: {
-          systemInstruction: SYSTEM_PROMPT,
-        }
-      });
-
-      const aiResponse = response.text || "Maaf, saya tidak bisa memproses permintaan Anda saat ini.";
+      const aiResponse = await callAiApi(query);
       setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
     } catch (error) {
-      console.error("AI Chat Error:", error);
       setMessages(prev => [...prev, { role: 'ai', content: "Terjadi kesalahan pada sistem asisten AI. Silakan periksa koneksi Anda atau coba lagi nanti." }]);
     } finally {
       setIsTyping(false);
@@ -90,13 +101,11 @@ export default function AIChat() {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
 
-    // Increment search count for analytics
     const currentSearches = parseInt(localStorage.getItem('aksi_cepat_searches') || '0');
     localStorage.setItem('aksi_cepat_searches', (currentSearches + 1).toString());
 
     const userMessage = input.trim();
     
-    // Store log for analytics
     const userJson = localStorage.getItem('aksi_cepat_current_user');
     const currentUser = userJson ? JSON.parse(userJson) : null;
     const logsJson = localStorage.getItem('aksi_cepat_search_logs') || '[]';
@@ -114,23 +123,15 @@ export default function AIChat() {
     setIsTyping(true);
 
     try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: userMessage,
-        config: {
-          systemInstruction: SYSTEM_PROMPT,
-        }
-      });
-
-      const aiResponse = response.text || "Maaf, saya tidak bisa memproses permintaan Anda saat ini.";
+      const aiResponse = await callAiApi(userMessage);
       setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
     } catch (error) {
-      console.error("AI Chat Error:", error);
       setMessages(prev => [...prev, { role: 'ai', content: "Terjadi kesalahan pada sistem asisten AI. Silakan periksa koneksi Anda atau coba lagi nanti." }]);
     } finally {
       setIsTyping(false);
     }
   };
+
 
   return (
     <div className="space-y-6">
