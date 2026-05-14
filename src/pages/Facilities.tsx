@@ -216,10 +216,10 @@ export default function Facilities({ user }: FacilitiesProps) {
  
       console.log(`Found ${osmFacilities.length} OSM results.`);
 
-      if (osmFacilities.length === 0 && radius < 45000) {
+      if (osmFacilities.length === 0 && radius < 60000) {
         // Retry with larger radius if nothing found
-        console.log("No results, retrying with 45km...");
-        fetchNearbyFromOSM(lat, lng, 45000);
+        console.log("No results, retrying with 60km...");
+        fetchNearbyFromOSM(lat, lng, 60000);
         return;
       }
  
@@ -245,7 +245,7 @@ export default function Facilities({ user }: FacilitiesProps) {
 
   useEffect(() => {
     // Initialize facilities
-    const STORAGE_KEY = 'aksi_cepat_facilities_v11';
+    const STORAGE_KEY = 'aksi_cepat_facilities_v12';
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -257,7 +257,8 @@ export default function Facilities({ user }: FacilitiesProps) {
         
         console.log("Facilities Loaded:", parsed.length, parsed);
         
-        if (parsed.length < 39) {
+        // Update: We now have 54+ facilities in initial data
+        if (parsed.length < 50) {
           setFacilities(INITIAL_FACILITIES);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_FACILITIES));
         } else {
@@ -316,16 +317,16 @@ export default function Facilities({ user }: FacilitiesProps) {
       .filter(f => f.distance !== Infinity)
       .sort((a, b) => a.distance - b.distance);
 
-    const nearby = allWithDistance.filter(f => f.distance < 50);
+    const nearby = allWithDistance.filter(f => f.distance < 75);
     
-    // If none are nearby within 50km, return the top 3 closest ones anyway
+    // If none are nearby within 75km, return the top 5 closest ones anyway
     // This handles users in cities where we don't have enough mock data or OSM failed
     if (nearby.length === 0 && allWithDistance.length > 0) {
-      console.warn("No facilities found within 50km. Showing closest 3 global fallbacks.");
-      return allWithDistance.slice(0, 3);
+      console.warn("No facilities found within 75km. Showing closest 5 global fallbacks.");
+      return allWithDistance.slice(0, 5);
     }
       
-    const finalRecs = nearby.slice(0, 15);
+    const finalRecs = nearby.slice(0, 20);
     console.log("Recommended Facilities Updated:", finalRecs.length, finalRecs.map(r => r.name));
     return finalRecs;
   }, [userLocation?.[0], userLocation?.[1], incidentLocation?.[0], incidentLocation?.[1], facilities]);
@@ -493,7 +494,11 @@ export default function Facilities({ user }: FacilitiesProps) {
                     {isFetchingNearby ? (
                       <span className="text-[7px] animate-pulse mt-0.5 opacity-80 uppercase tracking-widest leading-none">Mencari RS Terdekat...</span>
                     ) : (
-                      <span className="text-[7px] mt-0.5 opacity-80 uppercase tracking-widest leading-none">Disarankan: {recommendedFacilities.length} Faskes di Area</span>
+                      <span className="text-[7px] mt-0.5 opacity-80 uppercase tracking-widest leading-none">
+                        {recommendedFacilities.length > 0 
+                          ? `Disarankan: ${recommendedFacilities.length} Faskes Terdeteksi`
+                          : "Memindai Area Luas..."}
+                      </span>
                     )}
                   </div>
                 </Tooltip>

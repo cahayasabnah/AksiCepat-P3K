@@ -495,5 +495,140 @@ export const INITIAL_FACILITIES: Facility[] = [
     type: 'RS',
     lat: -5.1322,
     lng: 119.4892
+  },
+  {
+    id: 'sm-1',
+    name: 'RSUP Dr. Kariadi',
+    address: 'Jl. Dr. Sutomo No.16, Semarang',
+    phone: '024-841-3476',
+    type: 'RS',
+    lat: -7.0011,
+    lng: 110.4092
+  },
+  {
+    id: 'yk-1',
+    name: 'RSUP Dr. Sardjito',
+    address: 'Jl. Kesehatan No.1, Yogyakarta',
+    phone: '0274-631-190',
+    type: 'RS',
+    lat: -7.7685,
+    lng: 110.3737
+  },
+  {
+    id: 'md-1',
+    name: 'RSUP H. Adam Malik',
+    address: 'Jl. Bunga Lau No.17, Medan',
+    phone: '061-836-0143',
+    type: 'RS',
+    lat: 3.5186,
+    lng: 98.6019
+  },
+  {
+    id: 'pl-1',
+    name: 'RSUP Dr. Mohammad Hoesin',
+    address: 'Jl. Jend. Sudirman No.KM.3.5, Palembang',
+    phone: '0711-354-088',
+    type: 'RS',
+    lat: -2.9667,
+    lng: 104.7500
+  },
+  {
+    id: 'lp-1',
+    name: 'RSUD Dr. H. Abdul Moeloek',
+    address: 'Jl. Dr. Rivai No.6, Bandar Lampung',
+    phone: '0721-703-312',
+    type: 'RS',
+    lat: -5.4011,
+    lng: 105.2585
+  },
+  {
+    id: 'sl-1',
+    name: 'RSUD Dr. Moewardi',
+    address: 'Jl. Kolonel Sutarto No.132, Solo',
+    phone: '0271-633-400',
+    type: 'RS',
+    lat: -7.5583,
+    lng: 110.8353
+  },
+  {
+    id: 'pn-1',
+    name: 'RSUD dr. Soedarso',
+    address: 'Jl. Dr. Soedarso No.1, Pontianak',
+    phone: '0561-737-700',
+    type: 'RS',
+    lat: -0.0511,
+    lng: 109.3452
+  },
+  {
+    id: 'bm-1',
+    name: 'RSUD Ulin',
+    address: 'Jl. Ahmad Yani No.43, Banjarmasin',
+    phone: '0511-325-2180',
+    type: 'RS',
+    lat: -3.3242,
+    lng: 114.5911
+  },
+  {
+    id: 'bt-1',
+    name: 'RSUD dr. Zainoel Abidin',
+    address: 'Jl. Tgk Daud Beureueh No.108, Banda Aceh',
+    phone: '0651-34562',
+    type: 'RS',
+    lat: 5.5611,
+    lng: 95.3333
+  },
+  {
+    id: 'pd-1',
+    name: 'RSUP Dr. M. Djamil',
+    address: 'Jl. Perintis Kemerdekaan, Padang',
+    phone: '0751-32371',
+    type: 'RS',
+    lat: -0.9411,
+    lng: 100.3667
+  },
+  {
+    id: 'pk-1',
+    name: 'RSUD Arifin Achmad',
+    address: 'Jl. Diponegoro No.2, Pekanbaru',
+    phone: '0761-23418',
+    type: 'RS',
+    lat: 0.5255,
+    lng: 101.4472
+  },
+  {
+    id: 'mt-1',
+    name: 'RSUP Dr. J. Leimena',
+    address: 'Jl. Dr. J. Leimena, Ambon',
+    phone: '0911-382-5000',
+    type: 'RS',
+    lat: -3.6555,
+    lng: 128.1811
+  },
+  {
+    id: 'jp-1',
+    name: 'RSUD Jayapura',
+    address: 'Jl. Kesehatan No.1, Jayapura',
+    phone: '0967-533-616',
+    type: 'RS',
+    lat: -2.5333,
+    lng: 140.7000
+  },
+  {
+    id: 'kb-1',
+    name: 'RSUD Dr. Kanujoso Djatiwibowo',
+    address: 'Jl. MT Haryono No.656, Balikpapan',
+    phone: '0542-873-901',
+    type: 'RS',
+    lat: -1.2255,
+    lng: 116.8511
+  },
+  {
+    id: 'smr-1',
+    name: 'RSUD Abdul Wahab Sjahranie',
+    address: 'Jl. Palang Merah No.1, Samarinda',
+    phone: '0541-738-118',
+    type: 'RS',
+    lat: -0.4852,
+    lng: 117.1455
   }
 ];
