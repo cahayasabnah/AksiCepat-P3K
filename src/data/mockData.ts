@@ -450,5 +450,50 @@ export const INITIAL_FACILITIES: Facility[] = [
     type: 'RS',
     lat: -6.5892,
     lng: 106.7792
+  },
+  {
+    id: 'bd-1',
+    name: 'RSUP Dr. Hasan Sadikin (RSHS)',
+    address: 'Jl. Pasteur No.38, Bandung',
+    phone: '022-255-1111',
+    type: 'RS',
+    lat: -6.8966,
+    lng: 107.5982
+  },
+  {
+    id: 'sb-1',
+    name: 'RSUD Dr. Soetomo',
+    address: 'Jl. Mayjen Prof. Dr. Moestopo No.6-8, Surabaya',
+    phone: '031-550-1078',
+    type: 'RS',
+    lat: -7.2675,
+    lng: 112.7582
+  },
+  {
+    id: 'bl-1',
+    name: 'RSUP Prof. Dr. I.G.N.G. Ngoerah (Sanglah)',
+    address: 'Jl. Diponegoro, Denpasar, Bali',
+    phone: '0361-227-911',
+    type: 'RS',
+    lat: -8.6755,
+    lng: 115.2125
+  },
+  {
+    id: 'ml-1',
+    name: 'RSUD Dr. Saiful Anwar',
+    address: 'Jl. Jaksa Agung Suprapto No.2, Malang',
+    phone: '0341-362-101',
+    type: 'RS',
+    lat: -7.9723,
+    lng: 112.6318
+  },
+  {
+    id: 'mk-1',
+    name: 'RSUP Dr. Wahidin Sudirohusodo',
+    address: 'Jl. Perintis Kemerdekaan KM.11, Makassar',
+    phone: '0411-584-677',
+    type: 'RS',
+    lat: -5.1322,
+    lng: 119.4892
   }
 ];
