@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Hospital, Phone, MapPin, Plus, Trash2, X, Search, Building2, ExternalLink, ArrowLeft, Navigation, Map as MapIcon, List } from 'lucide-react';
+import { Hospital, Phone, MapPin, Plus, Trash2, X, Search, Building2, ExternalLink, ArrowLeft, Navigation, Map as MapIcon, List, RefreshCw, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Facility, User } from '../types';
 import { INITIAL_FACILITIES } from '../data/mockData';
@@ -245,20 +245,31 @@ export default function Facilities({ user }: FacilitiesProps) {
 
   useEffect(() => {
     // Initialize facilities
-    const saved = localStorage.getItem('aksi_cepat_facilities');
+    const STORAGE_KEY = 'aksi_cepat_facilities_v7';
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      const parsed: Facility[] = JSON.parse(saved);
-      // If we have fewer than 27 facilities, reset to include the new ones (Tangerang etc)
-      const needsUpdate = parsed.length < 27 || parsed.some(f => !f.lat || !f.lng);
-      if (needsUpdate) {
+      try {
+        const parsed: Facility[] = JSON.parse(saved).map((f: any) => ({
+          ...f,
+          lat: Number(f.lat),
+          lng: Number(f.lng)
+        }));
+        
+        console.log("Facilities Loaded:", parsed.length, parsed);
+        
+        if (parsed.length < 31) {
+          setFacilities(INITIAL_FACILITIES);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_FACILITIES));
+        } else {
+          setFacilities(parsed);
+        }
+      } catch (err) {
+        console.error("Parse Error:", err);
         setFacilities(INITIAL_FACILITIES);
-        localStorage.setItem('aksi_cepat_facilities', JSON.stringify(INITIAL_FACILITIES));
-      } else {
-        setFacilities(parsed);
       }
     } else {
       setFacilities(INITIAL_FACILITIES);
-      localStorage.setItem('aksi_cepat_facilities', JSON.stringify(INITIAL_FACILITIES));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_FACILITIES));
     }
 
     // Watch user location for real-time tracking (like Gojek)
@@ -347,10 +358,23 @@ export default function Facilities({ user }: FacilitiesProps) {
 
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold text-slate-800">Faskes Terdekat</h1>
-          <p className="text-slate-500">Daftar Rumah Sakit dan Klinik untuk penanganan medis profesional.</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic flex items-center gap-2">
+            <Hospital className="text-red-600" />
+            Radar Faskes
+          </h1>
+          <p className="text-slate-500 font-medium">Temukan penanganan medis terdekat dengan cepat.</p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => {
+              localStorage.clear();
+              window.location.reload();
+            }}
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+          >
+            <RefreshCw size={12} className="inline mr-1" />
+            Reset
+          </button>
           <div className="bg-white p-1 rounded-2xl border border-slate-200 flex shadow-sm">
             <button 
               onClick={() => setViewMode('list')}
@@ -385,27 +409,49 @@ export default function Facilities({ user }: FacilitiesProps) {
 
       {/* Map View */}
       {viewMode === 'map' && (
-        <div className="h-[600px] w-full rounded-[40px] overflow-hidden border border-slate-200 shadow-xl relative z-10 mb-8">
-          <AnimatePresence>
-            {isFetchingNearby && (
-              <motion.div 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] pointer-events-none"
-              >
-                <div className="bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700/50 backdrop-blur-xl">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
-                  <span className="text-xs font-black uppercase tracking-[0.2em] italic">Mencari Faskes Terdekat...</span>
+        <div className="h-[650px] w-full rounded-[40px] overflow-hidden border border-slate-200 shadow-2xl relative z-10 mb-8">
+          {/* Top Status Bar on Map */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-full max-w-sm px-4">
+            <motion.div 
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className={`bg-white/95 backdrop-blur-md rounded-2xl shadow-xl p-3 border-2 ${recommendedFacilities.length > 0 ? 'border-red-500' : 'border-blue-500'} flex items-center gap-3`}
+            >
+              <div className={`p-2 rounded-full ${recommendedFacilities.length > 0 ? 'bg-red-500 text-white animate-pulse' : 'bg-blue-500 text-white'}`}>
+                {recommendedFacilities.length > 0 ? <AlertTriangle size={18} /> : <Navigation size={18} />}
+              </div>
+              <div className="flex-1">
+                <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider leading-none mb-1">Radar Faskes Terdekat</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-bold text-slate-800">
+                    {recommendedFacilities.length > 0 
+                      ? `${recommendedFacilities.length} Faskes Direkomendasikan`
+                      : (isFetchingNearby ? 'Mencari di Database...' : 'Tunggu GPS / Klik Peta')}
+                  </p>
+                  {!isFetchingNearby && (
+                    <button 
+                      onClick={() => {
+                        const loc = incidentLocation || userLocation;
+                        if (loc) fetchNearbyFromOSM(loc[0], loc[1]);
+                      }}
+                      className="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded text-red-600 uppercase hover:bg-red-50"
+                    >
+                      Scan
+                    </button>
+                  )}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+              {isFetchingNearby && (
+                <RefreshCw size={14} className="animate-spin text-red-500" />
+              )}
+            </motion.div>
+          </div>
 
           <MapContainer 
             center={userLocation || [-6.2088, 106.8456]} 
             zoom={13} 
             className="h-full w-full"
+            style={{ background: '#f1f5f9' }}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

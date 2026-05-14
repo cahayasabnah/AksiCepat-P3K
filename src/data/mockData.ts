@@ -387,5 +387,41 @@ export const INITIAL_FACILITIES: Facility[] = [
     type: 'Klinik',
     lat: -6.1795,
     lng: 106.6288
+  },
+  {
+    id: 'bk-1',
+    name: 'RSUD dr. Chasbullah Abdul Majid',
+    address: 'Jl. Pramuka No.55, Bekasi Selatan',
+    phone: '021-884-1005',
+    type: 'RS',
+    lat: -6.2392,
+    lng: 106.9942
+  },
+  {
+    id: 'bk-2',
+    name: 'RSIA Hermina Bekasi',
+    address: 'Jl. Kemakmuran No.39, Bekasi Selatan',
+    phone: '021-884-2121',
+    type: 'RS',
+    lat: -6.2385,
+    lng: 106.9922
+  },
+  {
+    id: 'bk-3',
+    name: 'RS Primaya Bekasi Barat',
+    address: 'Jl. KH. Noer Ali No.Kav. 17-18, Kalimalang',
+    phone: '021-886-8888',
+    type: 'RS',
+    lat: -6.2442,
+    lng: 106.9822
+  },
+  {
+    id: 'bk-4',
+    name: 'RS Mitra Keluarga Bekasi Barat',
+    address: 'Jl. Jend. Sudirman No.1, Bekasi Barat',
+    phone: '021-885-3333',
+    type: 'RS',
+    lat: -6.2355,
+    lng: 106.9852
   }
 ];
