@@ -50,22 +50,22 @@ const IncidentIcon = L.divIcon({
 
 const RecommendationIcon = (type: string) => L.divIcon({
   html: `
-    <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
-      <div style="position: absolute; inset: -16px; background: rgba(220, 38, 38, 0.2); border-radius: 9999px;" class="animate-ping"></div>
-      <div style="position: absolute; top: -40px; background: #dc2626; color: #ffffff; font-size: 10px; font-weight: 900; padding: 4px 12px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); text-transform: uppercase; font-style: italic; white-space: nowrap; z-index: 2000; border: 2px solid white;">
+    <div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 44px; height: 44px;">
+      <div style="position: absolute; inset: -18px; border: 3px solid rgba(220, 38, 38, 0.4); border-radius: 9999px;" class="animate-ping"></div>
+      <div style="position: absolute; top: -52px; background: #dc2626; color: #ffffff; font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); text-transform: uppercase; font-style: italic; white-space: nowrap; z-index: 5000; border: 2.5px solid white;">
         ${type === 'RS' ? 'REKOMENDASI RS' : 'REKOMENDASI KLINIK'}
-        <div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 10px; height: 10px; background: #dc2626; border-bottom: 2px solid white; border-right: 2px solid white;"></div>
+        <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 12px; height: 12px; background: #dc2626; border-bottom: 2.5px solid white; border-right: 2.5px solid white;"></div>
       </div>
-      <div style="width: 40px; height: 40px; background: #ffffff; border-radius: 9999px; border: 4px solid #dc2626; box-shadow: 0 0 20px rgba(220, 38, 38, 0.5); display: flex; align-items: center; justify-content: center; z-index: 1100;">
-         <div style="width: 10px; height: 10px; background: #dc2626; border-radius: 9999px;" class="animate-pulse"></div>
-         <div style="position: absolute; inset: 0; border: 2px solid #fecaca; border-radius: 9999px;" class="animate-[ping_3s_infinite]"></div>
+      <div style="width: 44px; height: 44px; background: #ffffff; border-radius: 9999px; border: 5px solid #dc2626; box-shadow: 0 0 25px rgba(220, 38, 38, 0.6); display: flex; items-center: center; justify-content: center; z-index: 1200; overflow: visible;">
+         <div style="width: 12px; height: 12px; background: #dc2626; border-radius: 9999px; align-self: center;" class="animate-pulse"></div>
+         <div style="position: absolute; inset: -4px; border: 3px solid #fecaca; border-radius: 9999px; pointer-events: none;" class="animate-[ping_4s_infinite]"></div>
       </div>
-      <div style="width: 8px; height: 16px; background: rgba(220, 38, 38, 0.4); border-radius: 9999px; margin-top: 4px; filter: blur(1px);"></div>
+      <div style="width: 12px; height: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 50%; margin-top: 6px; filter: blur(2px);"></div>
     </div>
   `,
-  className: 'recommendation-marker',
-  iconSize: [40, 60],
-  iconAnchor: [20, 60]
+  className: 'recommendation-marker-v2',
+  iconSize: [44, 44],
+  iconAnchor: [22, 22]
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
@@ -237,8 +237,8 @@ export default function Facilities({ user }: FacilitiesProps) {
     const saved = localStorage.getItem('aksi_cepat_facilities');
     if (saved) {
       const parsed: Facility[] = JSON.parse(saved);
-      // If we have fewer than 18 facilities, reset to include the new ones
-      const needsUpdate = parsed.length < 18 || parsed.some(f => !f.lat || !f.lng);
+      // If we have fewer than 23 facilities, reset to include the new ones (Tangerang etc)
+      const needsUpdate = parsed.length < 23 || parsed.some(f => !f.lat || !f.lng);
       if (needsUpdate) {
         setFacilities(INITIAL_FACILITIES);
         localStorage.setItem('aksi_cepat_facilities', JSON.stringify(INITIAL_FACILITIES));

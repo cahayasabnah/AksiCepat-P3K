@@ -306,5 +306,50 @@ export const INITIAL_FACILITIES: Facility[] = [
     type: 'RS',
     lat: -6.2232,
     lng: 106.9452
+  },
+  {
+    id: 'tg-1',
+    name: 'RSUD Kabupaten Tangerang',
+    address: 'Jl. Ahmad Yani No.9, Sukaasih, Tangerang',
+    phone: '021-552-3502',
+    type: 'RS',
+    lat: -6.1730,
+    lng: 106.6397
+  },
+  {
+    id: 'tg-2',
+    name: 'RS Mayapada Tangerang',
+    address: 'Jl. Honoris Raya No.6, Modernland',
+    phone: '021-2921-7777',
+    type: 'RS',
+    lat: -6.1985,
+    lng: 106.6505
+  },
+  {
+    id: 'tg-3',
+    name: 'RS Siloam Lippo Village',
+    address: 'Jl. Siloam No.6, Karawaci, Tangerang',
+    phone: '021-8064-6900',
+    type: 'RS',
+    lat: -6.2255,
+    lng: 106.6045
+  },
+  {
+    id: 'tg-4',
+    name: 'RS Sari Asih Karawaci',
+    address: 'Jl. Imam Bonjol No.38, Tangerang',
+    phone: '021-552-2794',
+    type: 'RS',
+    lat: -6.2081,
+    lng: 106.6186
+  },
+  {
+    id: 'tg-5',
+    name: 'RS EMC Tangerang',
+    address: 'Jl. KH Hasyim Ashari No.24, Cipondoh',
+    phone: '021-2977-9977',
+    type: 'RS',
+    lat: -6.1852,
+    lng: 106.6631
   }
 ];
