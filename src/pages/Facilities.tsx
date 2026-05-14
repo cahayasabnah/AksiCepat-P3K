@@ -50,20 +50,28 @@ const IncidentIcon = L.divIcon({
 
 const RecommendationIcon = (type: string) => L.divIcon({
   html: `
-    <div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 44px; height: 44px;">
-      <div style="position: absolute; inset: -18px; border: 3px solid rgba(220, 38, 38, 0.4); border-radius: 9999px;" class="animate-ping"></div>
-      <div style="position: absolute; top: -52px; background: #dc2626; color: #ffffff; font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); text-transform: uppercase; font-style: italic; white-space: nowrap; z-index: 5000; border: 2.5px solid white;">
-        ${type === 'RS' ? 'REKOMENDASI RS' : 'REKOMENDASI KLINIK'}
-        <div style="position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 12px; height: 12px; background: #dc2626; border-bottom: 2.5px solid white; border-right: 2.5px solid white;"></div>
+    <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; overflow: visible;">
+      <!-- Outer Ping Effect -->
+      <div style="position: absolute; inset: -24px; border: 5px solid rgba(220, 38, 38, 0.6); border-radius: 9999px;" class="animate-ping"></div>
+      
+      <!-- Top Label/Badge -->
+      <div style="position: absolute; top: -55px; left: 50%; transform: translateX(-50%); background: #dc2626; color: #ffffff; font-size: 11px; font-weight: 900; padding: 6px 14px; border-radius: 14px; box-shadow: 0 10px 20px rgba(220, 38, 38, 0.4); text-transform: uppercase; font-style: italic; white-space: nowrap; z-index: 5000; border: 2px solid white; display: flex; flex-direction: column; align-items: center;">
+        ${type === 'RS' ? 'RS TERDEKAT' : 'KLINIK TERDEKAT'}
+        <div style="width: 12px; height: 12px; background: #dc2626; transform: rotate(45deg); margin-top: -6px; border-bottom: 2px solid white; border-right: 2px solid white;"></div>
       </div>
-      <div style="width: 44px; height: 44px; background: #ffffff; border-radius: 9999px; border: 5px solid #dc2626; box-shadow: 0 0 25px rgba(220, 38, 38, 0.6); display: flex; items-center: center; justify-content: center; z-index: 1200; overflow: visible;">
-         <div style="width: 12px; height: 12px; background: #dc2626; border-radius: 9999px; align-self: center;" class="animate-pulse"></div>
+
+      <!-- Main Marker Body -->
+      <div style="width: 44px; height: 44px; background: #ffffff; border-radius: 9999px; border: 5px solid #dc2626; box-shadow: 0 0 30px rgba(220, 38, 38, 0.7); display: flex; align-items: center; justify-content: center; z-index: 1200; position: relative;">
+         <div style="width: 14px; height: 14px; background: #dc2626; border-radius: 9999px;" class="animate-pulse"></div>
+         <!-- Inner Glow -->
          <div style="position: absolute; inset: -4px; border: 3px solid #fecaca; border-radius: 9999px; pointer-events: none;" class="animate-[ping_4s_infinite]"></div>
       </div>
-      <div style="width: 12px; height: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 50%; margin-top: 6px; filter: blur(2px);"></div>
+      
+      <!-- Shadow -->
+      <div style="position: absolute; bottom: -8px; width: 14px; height: 8px; background: rgba(0, 0, 0, 0.3); border-radius: 50%; filter: blur(2px);"></div>
     </div>
   `,
-  className: 'recommendation-marker-v2',
+  className: '', // Remove custom class to avoid default Leaflet clipping
   iconSize: [44, 44],
   iconAnchor: [22, 22]
 });
@@ -192,14 +200,17 @@ export default function Facilities({ user }: FacilitiesProps) {
         const phone = tags['contact:phone'] || tags.phone || tags['emergency:phone'] || '119 (Darurat)';
         const type = tags.amenity === 'hospital' ? 'RS' : 'Klinik';
         
+        const latVal = Number(el.lat || el.center?.lat);
+        const lngVal = Number(el.lon || el.center?.lon);
+
         return {
           id: `osm-${el.id}`,
           name,
           address,
           phone,
           type,
-          lat: el.lat || el.center?.lat,
-          lng: el.lon || el.center?.lon
+          lat: latVal,
+          lng: lngVal
         } as Facility;
       }).filter((f: Facility) => f.lat && f.lng);
  
@@ -237,8 +248,8 @@ export default function Facilities({ user }: FacilitiesProps) {
     const saved = localStorage.getItem('aksi_cepat_facilities');
     if (saved) {
       const parsed: Facility[] = JSON.parse(saved);
-      // If we have fewer than 23 facilities, reset to include the new ones (Tangerang etc)
-      const needsUpdate = parsed.length < 23 || parsed.some(f => !f.lat || !f.lng);
+      // If we have fewer than 27 facilities, reset to include the new ones (Tangerang etc)
+      const needsUpdate = parsed.length < 27 || parsed.some(f => !f.lat || !f.lng);
       if (needsUpdate) {
         setFacilities(INITIAL_FACILITIES);
         localStorage.setItem('aksi_cepat_facilities', JSON.stringify(INITIAL_FACILITIES));
@@ -277,7 +288,7 @@ export default function Facilities({ user }: FacilitiesProps) {
     const baseLoc = incidentLocation || userLocation;
     if (!baseLoc || facilities.length === 0) return [];
     
-    return [...facilities]
+    const recs = [...facilities]
       .map(f => ({
         ...f,
         distance: f.lat && f.lng ? calculateDistance(baseLoc[0], baseLoc[1], f.lat, f.lng) : Infinity
@@ -285,6 +296,9 @@ export default function Facilities({ user }: FacilitiesProps) {
       .filter(f => f.distance !== Infinity && f.distance < 50) // Within 50km
       .sort((a, b) => a.distance - b.distance)
       .slice(0, 15); // Show top 15 recommendations on map
+      
+    console.log("Recommended Facilities Updated:", recs.length, recs.map(r => r.name));
+    return recs;
   }, [userLocation, incidentLocation, facilities]);
 
   const filteredFacilities = facilities.filter(f => 

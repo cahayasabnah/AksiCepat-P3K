@@ -351,5 +351,41 @@ export const INITIAL_FACILITIES: Facility[] = [
     type: 'RS',
     lat: -6.1852,
     lng: 106.6631
+  },
+  {
+    id: 'tg-6',
+    name: 'Rumah Sakit Umum Daerah (RSUD) Kota Tangerang',
+    address: 'Jl. l. Perintis Kemerdekaan II No.1, Babakan',
+    phone: '021-2972-0200',
+    type: 'RS',
+    lat: -6.1843,
+    lng: 106.6433
+  },
+  {
+    id: 'tg-7',
+    name: 'RS Melati',
+    address: 'Jl. Merdeka No.92, Sukajadi, Tangerang',
+    phone: '021-552-3911',
+    type: 'RS',
+    lat: -6.1788,
+    lng: 106.6265
+  },
+  {
+    id: 'tg-8',
+    name: 'RSIA Pratiwi',
+    address: 'Jl. l. Raden Saleh No.43, Karang Tengah',
+    phone: '021-731-8666',
+    type: 'RS',
+    lat: -6.1755,
+    lng: 106.6111
+  },
+  {
+    id: 'tg-9',
+    name: 'Puskesmas Sukajadi',
+    address: 'Jl. l. Merdeka, Sukajadi, Tangerang',
+    phone: '021-552-2794',
+    type: 'Klinik',
+    lat: -6.1795,
+    lng: 106.6288
   }
 ];
