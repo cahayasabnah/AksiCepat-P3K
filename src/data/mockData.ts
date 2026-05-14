@@ -630,5 +630,50 @@ export const INITIAL_FACILITIES: Facility[] = [
     type: 'RS',
     lat: -0.4852,
     lng: 117.1455
+  },
+  {
+    id: 'tgr-dense-1',
+    name: 'RS Mentari',
+    address: 'Jl. Raya Legok Karawaci, Tangerang',
+    phone: '021-2966-2222',
+    type: 'RS',
+    lat: -6.2655,
+    lng: 106.6111
+  },
+  {
+    id: 'tgr-dense-2',
+    name: 'RS Qadr',
+    address: 'Komp. Islamic Village, Karawaci',
+    phone: '021-546-4466',
+    type: 'RS',
+    lat: -6.2285,
+    lng: 106.5985
+  },
+  {
+    id: 'jkt-dense-1',
+    name: 'RS Grha Kedoya',
+    address: 'Jl. Panjang No.26, Jakarta Barat',
+    phone: '021-2991-0999',
+    type: 'RS',
+    lat: -6.1666,
+    lng: 106.7644
+  },
+  {
+    id: 'jkt-dense-2',
+    name: 'RS Royal Taruma',
+    address: 'Jl. Daan Mogot No.34, Grogol',
+    phone: '021-5695-8338',
+    type: 'RS',
+    lat: -6.1677,
+    lng: 106.7866
+  },
+  {
+    id: 'bks-dense-1',
+    name: 'RS Awal Bros Bekasi',
+    address: 'Jl. KH. Noer Ali, Bekasi Selatan',
+    phone: '021-886-8888',
+    type: 'RS',
+    lat: -6.2422,
+    lng: 106.9833
   }
 ];

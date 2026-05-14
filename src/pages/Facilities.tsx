@@ -245,7 +245,7 @@ export default function Facilities({ user }: FacilitiesProps) {
 
   useEffect(() => {
     // Initialize facilities
-    const STORAGE_KEY = 'aksi_cepat_facilities_v12';
+    const STORAGE_KEY = 'aksi_cepat_facilities_v16';
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -257,8 +257,8 @@ export default function Facilities({ user }: FacilitiesProps) {
         
         console.log("Facilities Loaded:", parsed.length, parsed);
         
-        // Update: We now have 54+ facilities in initial data
-        if (parsed.length < 50) {
+        // Update: We now have 60+ facilities in initial data
+        if (parsed.length < 60) {
           setFacilities(INITIAL_FACILITIES);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_FACILITIES));
         } else {
@@ -317,16 +317,15 @@ export default function Facilities({ user }: FacilitiesProps) {
       .filter(f => f.distance !== Infinity)
       .sort((a, b) => a.distance - b.distance);
 
-    const nearby = allWithDistance.filter(f => f.distance < 75);
+    const nearby = allWithDistance.filter(f => f.distance < 150);
     
-    // If none are nearby within 75km, return the top 5 closest ones anyway
-    // This handles users in cities where we don't have enough mock data or OSM failed
+    // If none are nearby within 150km, return the top 10 closest ones anyway
     if (nearby.length === 0 && allWithDistance.length > 0) {
-      console.warn("No facilities found within 75km. Showing closest 5 global fallbacks.");
-      return allWithDistance.slice(0, 5);
+      console.warn("No facilities found within 150km. Showing closest 10 global fallbacks.");
+      return allWithDistance.slice(0, 10);
     }
       
-    const finalRecs = nearby.slice(0, 20);
+    const finalRecs = nearby.slice(0, 100); // Show up to 100 recommendations on map for maximum density
     console.log("Recommended Facilities Updated:", finalRecs.length, finalRecs.map(r => r.name));
     return finalRecs;
   }, [userLocation?.[0], userLocation?.[1], incidentLocation?.[0], incidentLocation?.[1], facilities]);
