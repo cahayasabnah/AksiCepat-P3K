@@ -50,30 +50,30 @@ const IncidentIcon = L.divIcon({
 
 const RecommendationIcon = (type: string) => L.divIcon({
   html: `
-    <div style="position: relative; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; overflow: visible;">
+    <div style="position: relative; width: 160px; height: 160px; display: flex; align-items: center; justify-content: center; overflow: visible;">
       <!-- Outer Ping Effect -->
-      <div style="position: absolute; inset: -24px; border: 5px solid rgba(220, 38, 38, 0.6); border-radius: 9999px;" class="animate-ping"></div>
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70px; height: 70px; border: 6px solid rgba(220, 38, 38, 0.6); border-radius: 9999px;" class="animate-ping"></div>
       
-      <!-- Top Label/Badge -->
-      <div style="position: absolute; top: -55px; left: 50%; transform: translateX(-50%); background: #dc2626; color: #ffffff; font-size: 11px; font-weight: 900; padding: 6px 14px; border-radius: 14px; box-shadow: 0 10px 20px rgba(220, 38, 38, 0.4); text-transform: uppercase; font-style: italic; white-space: nowrap; z-index: 5000; border: 2px solid white; display: flex; flex-direction: column; align-items: center;">
+      <!-- Top Label/Badge (Positioned relative to center) -->
+      <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: #dc2626; color: #ffffff; font-size: 11px; font-weight: 900; padding: 6px 14px; border-radius: 14px; box-shadow: 0 10px 20px rgba(220, 38, 38, 0.4); text-transform: uppercase; font-style: italic; white-space: nowrap; z-index: 5000; border: 2.5px solid white; display: flex; flex-direction: column; align-items: center;">
         ${type === 'RS' ? 'RS TERDEKAT' : 'KLINIK TERDEKAT'}
-        <div style="width: 12px; height: 12px; background: #dc2626; transform: rotate(45deg); margin-top: -6px; border-bottom: 2px solid white; border-right: 2px solid white;"></div>
+        <div style="width: 12px; height: 12px; background: #dc2626; transform: rotate(45deg); margin-top: -6px; border-bottom: 2.5px solid white; border-right: 2.5px solid white;"></div>
       </div>
 
-      <!-- Main Marker Body -->
-      <div style="width: 44px; height: 44px; background: #ffffff; border-radius: 9999px; border: 5px solid #dc2626; box-shadow: 0 0 30px rgba(220, 38, 38, 0.7); display: flex; align-items: center; justify-content: center; z-index: 1200; position: relative;">
-         <div style="width: 14px; height: 14px; background: #dc2626; border-radius: 9999px;" class="animate-pulse"></div>
+      <!-- Main Marker Body (Centered) -->
+      <div style="width: 48px; height: 48px; background: #ffffff; border-radius: 9999px; border: 6px solid #dc2626; box-shadow: 0 0 35px rgba(220, 38, 38, 0.8); display: flex; align-items: center; justify-content: center; z-index: 1200; position: relative;">
+         <div style="width: 16px; height: 16px; background: #dc2626; border-radius: 9999px;" class="animate-pulse"></div>
          <!-- Inner Glow -->
-         <div style="position: absolute; inset: -4px; border: 3px solid #fecaca; border-radius: 9999px; pointer-events: none;" class="animate-[ping_4s_infinite]"></div>
+         <div style="position: absolute; inset: -6px; border: 4px solid #fecaca; border-radius: 9999px; pointer-events: none;" class="animate-[ping_4s_infinite]"></div>
       </div>
       
       <!-- Shadow -->
-      <div style="position: absolute; bottom: -8px; width: 14px; height: 8px; background: rgba(0, 0, 0, 0.3); border-radius: 50%; filter: blur(2px);"></div>
+      <div style="position: absolute; bottom: 45px; width: 16px; height: 8px; background: rgba(0, 0, 0, 0.4); border-radius: 50%; filter: blur(2px);"></div>
     </div>
   `,
-  className: '', // Remove custom class to avoid default Leaflet clipping
-  iconSize: [44, 44],
-  iconAnchor: [22, 22]
+  className: '', 
+  iconSize: [160, 160],
+  iconAnchor: [80, 80]
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
@@ -245,7 +245,7 @@ export default function Facilities({ user }: FacilitiesProps) {
 
   useEffect(() => {
     // Initialize facilities
-    const STORAGE_KEY = 'aksi_cepat_facilities_v7';
+    const STORAGE_KEY = 'aksi_cepat_facilities_v10';
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -257,7 +257,7 @@ export default function Facilities({ user }: FacilitiesProps) {
         
         console.log("Facilities Loaded:", parsed.length, parsed);
         
-        if (parsed.length < 31) {
+        if (parsed.length < 34) {
           setFacilities(INITIAL_FACILITIES);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_FACILITIES));
         } else {

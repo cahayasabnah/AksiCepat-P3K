@@ -423,5 +423,32 @@ export const INITIAL_FACILITIES: Facility[] = [
     type: 'RS',
     lat: -6.2355,
     lng: 106.9852
+  },
+  {
+    id: 'dp-1',
+    name: 'RSUI (Rumah Sakit Universitas Indonesia)',
+    address: 'Kampus UI Depok, Pondok Cina',
+    phone: '021-508-29292',
+    type: 'RS',
+    lat: -6.3719,
+    lng: 106.8309
+  },
+  {
+    id: 'dp-2',
+    name: 'RS Hermina Depok',
+    address: 'Jl. Siliwangi No.50, Depok',
+    phone: '021-7720-2525',
+    type: 'RS',
+    lat: -6.4011,
+    lng: 106.8288
+  },
+  {
+    id: 'bg-1',
+    name: 'RSUD Kota Bogor',
+    address: 'Jl. Dr. Semeru No.120, Bogor Barat',
+    phone: '0251-831-2292',
+    type: 'RS',
+    lat: -6.5892,
+    lng: 106.7792
   }
 ];
