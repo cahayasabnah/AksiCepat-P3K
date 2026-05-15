@@ -207,12 +207,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
             </button>
           </form>
 
-          <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex gap-3">
-             <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0" />
-             <p className="text-xs text-blue-700 leading-relaxed">
-               <strong>Insight Admin:</strong> Pendaftar pertama aplikasi ini akan diberikan akses sebagai Admin secara otomatis untuk mengelola konten medis.
-             </p>
-          </div>
+
         </motion.div>
       </div>
     </div>
